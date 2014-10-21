@@ -9,8 +9,10 @@ void ofApp::setup(){
     totalModels = 0;
     
     modelTextures.resize(MAX_MODEL_TEXTURES);
-    skyImages.resize(MAX_SKY_IMAGES);
+    skyTextures.resize(MAX_SKY_TEXTURES);
     models.resize(MAX_MODELS);
+    
+    masterOutFbo.allocate(1920, 1080);
     
     light.enable();
     light.setPointLight();
@@ -20,29 +22,56 @@ void ofApp::setup(){
     
     gui = new ofxUICanvas();
     
-    //gui->addFPSSlider("FPS");
+    gui->addFPSSlider("FPS");
     gui->autoSizeToFitWidgets();
     
-    textureSelector = new ThumbSelector(400, 200, 50, 50);
-    for(int i =0; i< MAX_MODEL_TEXTURES; i++) {
+    textureSelector = new ThumbSelector(400, 260, 50, 50, "Model Texture");
+    for(int i =0; i< modelTextures.size(); i++) {
         Thumb * thumb = new Thumb();
         thumb->img = modelTextures[i].getThumb();
         textureSelector->thumbs.push_back(thumb);
     }
     
+    skyboxSelector = new ThumbSelector(400, 260, 50, 50, "Sky Texture");
+    for(int i =0; i< skyTextures.size(); i++) {
+        Thumb * thumb = new Thumb();
+        thumb->img = skyTextures[i].getThumb();
+        skyboxSelector->thumbs.push_back(thumb);
+    }
+    
+    modelSelector = new ThumbSelector(400, 260, 50, 50, "Landscape");
+    for(int i =0; i< models.size(); i++) {
+        Thumb * thumb = new Thumb();
+        thumb->img = models[i].getThumb();
+        modelSelector->thumbs.push_back(thumb);
+    }
+    
+    
+    syphonOut.setName("Landscape");
+    camParams.setName("Camera");
+    camParams.add(camFarClip.set("FarClip", 15, 1, 200));
+    camParams.add(camOrientation.set("Orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    camParams.add(camSpeed.set("Speed", 0, 0, 1));
+    camParams.add(camFov.set("Fov", 36, 0, 200));
+    guiPanel.setup(camParams);    
 }
 
 
 //--------------------------------------------------------------
 void ofApp::update(){
     
+    
+    cam.setFarClip(camFarClip);
+    cam.setOrientation(camOrientation);
+    cam.setFov(camFov);
+    
     // load images in paralel thread one image at a time
     if(textureQueue.size() > 0) {
-    
+        
         ofFile file = textureQueue.back();
-            
+        
         ofLogNotice()<<"Adding texture: "<<" "<<file.getFileName()<<endl;
-
+        
         threadImgLoader.loadFromDisk(modelTextures[totalTextures], file.getAbsolutePath());
         modelTextures[totalTextures].setChanged();
         
@@ -62,6 +91,12 @@ void ofApp::update(){
         
         // todo load threaded from buffer then load to model when needed by GPU
         models[totalModels].loadModel(file.getAbsolutePath());
+        
+        models[totalModels].setRotation(0,90,0,1,0);
+        
+        models[totalModels].vboMesh = models[totalModels].getMesh(0);
+        
+        models[totalModels].setChanged();
         //models[totalModels].getMesh(0).getNormalsPointer()
         totalModels++;
         
@@ -73,30 +108,46 @@ void ofApp::update(){
         modelTextures[i].update();
     }
     
+    for(int i =0; i< models.size(); i++) {
+        models[i].update();
+    }
+    
+    for(int i =0; i< skyTextures.size(); i++) {
+        skyTextures[i].update();
+    }
+    
     
     textureSelector->update();
-    
-    
+    modelSelector->update();
+    skyboxSelector->update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    
+    ofBackgroundGradient(ofColor(0,0,0), ofColor(20,20,20));
+
+    masterOutFbo.begin(); {
+    
+    ofBackground(0,0,0);
+        
     ofEnableLighting();
     ofEnableDepthTest();
     
-    cam.begin();
+    cam.begin(); {
+        
+        if(totalTextures > 0 && totalModels > 0) {
+            modelTextures[totalTextures-1].bind();
+            ofSetColor(255, 255, 255);
+            models[totalModels-1].vboMesh.draw();
+            modelTextures[totalTextures-1].unbind();
+        }
+        
+    } cam.end();
     
-    if(totalTextures > 0 && totalModels > 0) {
-        modelTextures[totalTextures-1].bind();
-        ofSetColor(255, 255, 255);
-        models[totalModels-1].drawFaces();
-        modelTextures[totalTextures-1].unbind();
-    }
-    
-    cam.end();
-
     ofDisableDepthTest();
     ofDisableLighting();
+    } masterOutFbo.end();
     
     ofSetColor(255, 255, 255);
     
@@ -110,10 +161,28 @@ void ofApp::draw(){
     vector<Model>::iterator mit;
     i=0;
     for(mit = models.begin(); mit != models.end(); ++mit, ++i) {
-        if(mit->hasMeshes()) mit->getThumb()->draw(0,i*50);
+        //if(mit->hasMeshes()) mit->getThumb()->draw(0,i*50);
     }
     
-    textureSelector->draw();
+    float guiY = ofGetHeight()-textureSelector->getHeight();
+
+    
+    ofPushMatrix(); {
+        ofTranslate(ofGetWidth()/2, 80);
+
+    ofScale(0.4,0.4);
+    masterOutFbo.draw(-(masterOutFbo.getWidth()+10)/2,0);
+        ofRectRounded(-(masterOutFbo.getWidth()+10)/2, 0, masterOutFbo.getWidth()+5, masterOutFbo.getHeight()+5, 8);
+    }ofPopMatrix();
+    
+    
+    textureSelector->draw(0,guiY);
+    modelSelector->draw(textureSelector->getWidth(), guiY);
+    skyboxSelector->draw(textureSelector->getWidth() + modelSelector->getWidth(), guiY);
+    
+    guiPanel.draw();
+    
+    syphonOut.publishTexture(&masterOutFbo.getTextureReference());
     
 }
 
@@ -165,7 +234,7 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
         ofFile file(dragInfo.files[i]);
         
         if(file.isDirectory()) {
-        
+            
             ofLogWarning()<<"Loading of directories not supported. "<<file.getFileName()<<" is a directory. Skipping."<<endl;
             
         } else if(file.isFile()) {
@@ -194,7 +263,7 @@ void ofApp::guiEvent(ofxUIEventArgs &e)
     string name = e.widget->getName();
     int kind = e.widget->getKind();
     cout << name << endl;
-   
+    
 }
 
 
