@@ -16,7 +16,7 @@
 // 4. create camera animation
 // 5. create nice gui selector
 
-#define MAX_TEXTURES 48
+#define MAX_TEXTURES 42
 #define MAX_SYPHON_TEXTURES 3
 #define MAX_COLOR_TEXTURES 3
 #define MAX_MODELS 36
@@ -83,9 +83,6 @@ private:
 class Texture : public BaseImage {
 public:
     
-    
-    
-    // todo: getSyphonTexture
 };
 
 class SyphonTexture {
@@ -103,6 +100,7 @@ public:
         //_client->setup();
         //fbo.allocate(_client->getWidth(), _client->getHeight());
         armed = true;
+        bChanged = true;
     }
     
     void update() {
@@ -111,24 +109,17 @@ public:
         }
     };
     
-    void updateFbo() {
-       /* if(client && client->isSetup()) {
-            fbo.begin();
-            client->draw(0,0);
-            fbo.end();
-        }*/
-    }
-    
     // todo: reset thumb on update
     ofImage * getThumb(int _width=50, int _height=50) {
         
         if(!bChanged && _width == thumb.getWidth() && _height == thumb.getHeight()) return &thumb;
         
             thumbFbo.begin();
-            if(client && client->isSetup()) {
-                ofBackground(255, 0, 0);
+            if(client && client->getTexture().isAllocated()) {
+                //todo - this is not working
+                client->draw(0,0);
             } else {
-                ofBackground(0, 255, 0);
+                ofBackground(255, 0, 0);
             }
             ofSetColor(255,255,255);
             thumbFbo.end();
@@ -320,7 +311,8 @@ public:
         
         int thumbsPerRow = (rect.width-(padding*2)) / (thumbWidth+padding);
         float rowWidth = (thumbsPerRow * (thumbWidth+padding)) + (padding);
-        float columnHeight = ((thumbs.size()/thumbsPerRow) * (thumbHeight+padding)) + padding;
+        int rows = ceil(thumbs.size()/thumbsPerRow);
+        float columnHeight = (rows * (thumbHeight+padding)) + padding;
         masterPadding = 0;
         if(center) {
             masterPadding = (getWidth()-rowWidth)/2; // X padding
@@ -439,15 +431,102 @@ private:
     
 };
 
-/*class crossFadeTextureShader : public ofShader {
+class TextureFader {
 public:
-    void setup();
-
-private:
-    ofTexture * texA;
-    ofTexture * texB;
     
-};*/
+    TextureFader(bool _useShader = true) {
+        useShader = _useShader;
+        textures.resize(3);
+        transitionDuraion.set("Duration", 1000, 0, 20000);
+        if(useShader) shader.load("shadersGL2/shader");
+    }
+    
+    void setup(){
+        
+    };
+    
+    void begin() {
+        shader.begin();
+        
+        shader.setUniform1f("fadeToB", tween.update());
+            
+        if(getCurrent() && getCurrent()->isAllocated() ){
+                shader.setUniformTexture("tex0", *getCurrent(), 1);
+                shader.setUniform2f("aTexSize", ofVec2f(getCurrent()->getWidth(), getCurrent()->getHeight()));
+        }
+            
+        if(getNext() &&  getNext()->isAllocated() ){
+                shader.setUniform2f("bTexSize", ofVec2f(getNext()->getWidth(), getNext()->getHeight()));
+                shader.setUniformTexture("tex1", *getNext(), 2);
+        }
+    }
+    
+    void end() {
+        shader.end();
+    }
+    
+    void draw(float _width, float _height, float fade = 1) {
+        
+        if(getCurrent() && getCurrent()->isAllocated()) {
+            ofSetColor(255,255,255,fade*255);
+            getCurrent()->draw(0, 0, _width, _height);
+        }
+        
+        if(getNext() && getNext()->isAllocated()) {
+            ofSetColor(255,255,255,fade*255*tween.update());
+            getNext()->draw(0, 0, _width, _height);
+        }
+        
+    }
+    
+    void update() {
+        if(tween.isCompleted() && getNext() != NULL) {
+            setCurrent(getNext());
+            setNext(NULL);
+            tween = ofxTween();
+        }
+        
+        if(getWait() != NULL && !tween.isRunning() && getNext() == NULL) {
+            setNext(getWait());
+            setWait(NULL);
+            tween.setParameters(1,easinglinear,ofxTween::easeIn,0.0,1.0,transitionDuraion,0);
+        }
+    };
+    
+    ofTexture * getCurrent() {
+        return textures[0];
+    };
+    
+    void setCurrent(ofTexture * _tex) {
+        textures[0] = _tex;
+    }
+    
+    void setNext(ofTexture * _tex) {
+        textures[1] = _tex;
+    }
+    
+    void setWait(ofTexture * _tex) {
+        textures[2] = _tex;
+    }
+    
+    ofTexture * getNext() {
+        return textures[1];
+    };
+    
+    ofTexture * getWait() {
+        return textures[2];
+    };
+    
+    ofParameter<float> transitionDuraion;
+    
+private:
+    vector<ofTexture *> textures; // current, fadeto, wait
+    ofxTween tween;
+    ofxEasingLinear easinglinear;
+    ofShader shader;
+    bool useShader;
+    
+};
 
 //class SkyBoxImage
 //class ModelTextureImage
@@ -484,6 +563,9 @@ public:
     ofCamera skyboxcam;
     ofxThreadedImageLoader threadImgLoader;
     
+    float zTravel;
+    ofVec3f camRefPos;
+    
     vector<ofFile> textureQueue;
     vector<ofFile> skyQueue;
     vector<ofFile> modelQueue;
@@ -496,30 +578,18 @@ public:
     
     int totalTextures, totalModels, totalSkyimages;
     
-    vector<Texture *> activeSecondaryTextures;
-    //vector<Texture *> activeModelTextures;
-    
-    ofTexture * landTexWait;
-    ofTexture * landTexCurrent;
-    ofTexture * landTexFadeTo;
+    TextureFader landscapeTextureFader;
+    TextureFader secondaryTextureFader;
+    TextureFader effectTextureFader;
+    TextureFader skyTextureFader;
     
     // todo same thing as with landTex
     vector<Texture *> activeSkyTextures;
     vector<Texture *> activeEffectTextures;
     
-    float landscapeTexTransitionP = 0;
-    float transitionTime = 10000;
-    unsigned int long landscapeTransitionBegin;
-    bool aToB = true;
-    
-    ofxTween landscapeTexTween;
-    ofxEasingLinear 	easinglinear;
-    
     vector<Model *> activeLandscapes;
-    
     vector<Model *> activeEffectModels;
         
-    ofEasyCam easyCam;
     ofLight light;
     
     ofVec3f travelPos;
@@ -539,11 +609,10 @@ public:
     ofParameter<ofVec3f> camOffset;
     ofParameter<float> camSpeed;
     ofParameter<float> camFov;
+    ofParameter<float> camNearClip;
     
-    ofParameter<bool> useSyphon;
-    
-    ofParameter<bool> directSyphon;
-    ofParameter<bool> blackout;
+    ofParameter<float> directSyphon;
+    ofParameter<float> blackout;
     
     ofParameter<ofVec3f> effectOffset;
     ofParameter<float>  effectScale;

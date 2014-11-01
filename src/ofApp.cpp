@@ -10,12 +10,6 @@ void ofApp::setup(){
     
     syphonInFbo.allocate(1000, 1000);
     
-    landscapeTextureShader.load("shadersGL2/shader");
-    
-    secondaryTextureShader.load("shadersGL2/shader");
-    effectTextureShader.load("shadersGL2/shader");
-    skyBoxTextureShader.load("shadersGL2/shader");
-    
     modelOffset = ofVec3f(0,0,0);
     
     textures.resize(MAX_TEXTURES);
@@ -43,7 +37,6 @@ void ofApp::setup(){
     gui->addFPSSlider("FPS");
     gui->autoSizeToFitWidgets();
     gui->setPosition(ofGetWidth()-gui->getRect()->width, ofGetHeight()-gui->getRect()->height);
-    
     settings.load("settings.xml");
     
     int texTags = settings.getNumTags("texture");
@@ -51,7 +44,9 @@ void ofApp::setup(){
         string path = settings.getValue("texture:path", "", i);
         ofFile f(path);
         if(f.isFile()) {
-            textures[i].load(f, &threadImgLoader);
+            if(textures.size() > i){
+                textures[i].load(f, &threadImgLoader);
+            }
         }
     }
     
@@ -96,16 +91,20 @@ void ofApp::setup(){
     
     syphonOut.setName("Landscape");
     camParams.setName("Camera");
-    camParams.add(camFarClip.set("FarClip", 14000.0f, 1, 20000));
+    camParams.add(camFarClip.set("FarClip", 18000.0f, 1, 20000));
+    camParams.add(camNearClip.set("NearClip", 20.0f, 0.0, 200));
     camParams.add(camOrientation.set("Orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
-    camParams.add(camSpeed.set("Speed", 0, -10, 10));
+    camParams.add(camSpeed.set("Speed", 0, 0, 1));
     camParams.add(camFov.set("Fov", 60, 0, 300));
-    camParams.add(camOffset.set("Start Offset", ofVec3f(0,100,0), ofVec3f(-100,-100,-100), ofVec3f(100,100,100)));
+    camParams.add(camOffset.set("Start Offset", ofVec3f(0,100,0), ofVec3f(-200,-200,-200), ofVec3f(200,200,200)));
     
-    camParams.add(useSyphon.set("Use syphon", false));
+    camParams.add(directSyphon.set("Direct Syphon", 0, 0, 1));
     
     camParams.add(effectOffset.set("effect offset", ofVec3f(0,0,-3000), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,5000)));
+    
     camParams.add(effectScale.set("effect scale", 1, 0, 1));
+    
+    zTravel = 0;
     
     guiPanel.setup(camParams);
     guiPanel.setPosition(1200, 100);
@@ -130,6 +129,7 @@ void ofApp::setup(){
         
     } testfbo.end();
     
+    camRefPos = cam.getPosition();
     
 }
 
@@ -137,25 +137,18 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
+    
+    
+    
     // handle transitions
-    
-    if(landscapeTexTween.isCompleted() && landTexFadeTo != NULL) {
-        landTexCurrent = landTexFadeTo;
-        landTexFadeTo = NULL;
-        landscapeTexTween = ofxTween();
-    }
-    
-    if(landTexWait != NULL && !landscapeTexTween.isRunning() && landTexFadeTo == NULL) {
-        landTexFadeTo = landTexWait;
-        landTexWait = NULL;
-        landscapeTexTween.setParameters(1,easinglinear,ofxTween::easeIn,0.0,1.0,transitionTime,0);
-    }
     
     cam.setFarClip(camFarClip);
     cam.setOrientation(camOrientation);
     cam.setFov(camFov);
+    cam.setNearClip(camNearClip);
+    zTravel -= camSpeed * ofGetLastFrameTime() * 1000;
+    cam.setPosition(camRefPos + camOffset.get() + ofVec3f(0,0,zTravel));
     
-    cam.setPosition(cam.getPosition() + ofVec3f(0,0,-camSpeed));
     // load images in parallel thread one image at a time
     if(textureQueue.size() > 0) {
         
@@ -197,6 +190,11 @@ void ofApp::update(){
     textureSelector->update();
     modelSelector->update();
     
+    landscapeTextureFader.update();
+    effectTextureFader.update();
+    skyTextureFader.update();
+    secondaryTextureFader.update();
+    
     // todo add listener for selector things that require independent logic
     
     // if we are approaching far cap
@@ -221,19 +219,20 @@ void ofApp::thumbEventListener(ThumbSelectorEventData& args) {
             }
             
             if(ofGetKeyPressed('1')) {
-                landTexWait = tex;
+                //landTexWait = tex;
+                landscapeTextureFader.setWait(tex);
             }
             
             if(ofGetKeyPressed('2')) {
-                activeSecondaryTextures.push_back(&textures[args.thumbNum]);
+                secondaryTextureFader.setWait(tex);
             }
             
             if(ofGetKeyPressed('3')) {
-                activeEffectTextures.push_back(&textures[args.thumbNum]);
+                effectTextureFader.setWait(tex);
             }
             
             if(ofGetKeyPressed('4')) {
-                activeSkyTextures.push_back(&textures[args.thumbNum]);
+                skyTextureFader.setWait(tex);
             }
             
         } else if(args.title == "Model") {
@@ -246,8 +245,6 @@ void ofApp::thumbEventListener(ThumbSelectorEventData& args) {
                 activeEffectModels.push_back(&models[args.thumbNum]);
             }
             
-            //activeModels.push_back(&models[args.thumbNum]);
-            
         }
     }
 }
@@ -255,10 +252,7 @@ void ofApp::thumbEventListener(ThumbSelectorEventData& args) {
 //--------------------------------------------------------------
 void ofApp::draw(){
     
-    
-    for(int i=0; i<syphonTextures.size(); i++) {
-        syphonTextures[i].updateFbo();
-    }
+
     
     ofEnableAlphaBlending();
     //ofDisableArbTex();
@@ -270,22 +264,12 @@ void ofApp::draw(){
         
         ofClear(0,0,0);
         
-        if(useSyphon) {
-            //client.draw(0,0, cubeMap.getWidth(), cubeMap.getHeight());
-            
-        } else if(activeSkyTextures.size()>0 && activeSkyTextures[0]->isAllocated()) {
-            
-            // todo: skymap transitions
-            activeSkyTextures[0]->draw(0,0, cubeMap.getWidth(), cubeMap.getHeight());
-            
-        }
-        
-        ofLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
-        ofLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
+        skyTextureFader.draw(cubeMap.getWidth(), cubeMap.getHeight());
+        //ofLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
+        //ofLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
         
         cubeMap.endDrawingInto2D();
     }
-    
     
     ofSetColor(255);
     
@@ -311,29 +295,7 @@ void ofApp::draw(){
         } skyboxcam.end();
         
         cam.begin(); {
-            
-            landscapeTextureShader.begin(); {
-                
-                ofSetColor(255, 255, 255);
-                
-                landscapeTextureShader.setUniform1f("fadeToB", landscapeTexTween.update());
-                
-                if(landTexCurrent && landTexCurrent->isAllocated() ){
-                    landscapeTextureShader.setUniformTexture("tex0", *landTexCurrent, 1);
-                    landscapeTextureShader.setUniform2f("aTexSize", ofVec2f(landTexCurrent->getWidth(), landTexCurrent->getHeight()));
-                }
-                
-                if(landTexFadeTo && landTexFadeTo->isAllocated() ){
-                    landscapeTextureShader.setUniform2f("bTexSize", ofVec2f(landTexFadeTo->getWidth(), landTexFadeTo->getHeight()));
-                    landscapeTextureShader.setUniformTexture("tex1", *landTexFadeTo, 2);
-                }
-                
-                /*if(useSyphon) {
-                 syphonInFbo.getTextureReference().bind();
-                 } else {
-                 activeModelTextures[0]->bind();
-                 }*/
-                
+            landscapeTextureFader.begin();{
                 ofPushMatrix(); {
                     ofTranslate(modelOffset);
                     
@@ -342,12 +304,20 @@ void ofApp::draw(){
                     for(int i=0; i< activeLandscapes.size(); i++) {
                         ofPushMatrix(); {
                             ofTranslate(off);
-                            for(int ii=0; ii <activeLandscapes[i]->vboMeshes.size(); ii++) {
+                            ofPushMatrix(); {
                                 
-                                activeLandscapes[i]->vboMeshes[ii].setMode(OF_PRIMITIVE_TRIANGLES);
+                                ofTranslate(masterOutFbo.getWidth()/2,masterOutFbo.getHeight()/2);
                                 
-                                activeLandscapes[i]->vboMeshes[ii].draw();
-                            }
+                                for(int ii=0; ii <activeLandscapes[i]->vboMeshes.size(); ii++) {
+                                    
+                                    // todo: wireframe / shaded
+                                    activeLandscapes[i]->vboMeshes[ii].setMode(OF_PRIMITIVE_TRIANGLES);
+                                
+                                    activeLandscapes[i]->vboMeshes[ii].draw();
+                                    
+                                
+                                }
+                            }ofPopMatrix();
                             
                             off.z += activeLandscapes[i]->getSceneMin().z;
                             
@@ -355,16 +325,7 @@ void ofApp::draw(){
                     }
                 } ofPopMatrix();
                 
-                ofDrawSphere(0, 0, 400);
-                
-                /*if(useSyphon) {
-                 syphonInFbo.getTextureReference().unbind();
-                 } else {
-                 activeModelTextures[0]->unbind();
-                 }*/
-                
-                
-            } landscapeTextureShader.end();
+            } landscapeTextureFader.end();
             
             ofPushMatrix(); {
                 ofPushStyle(); {
@@ -378,26 +339,11 @@ void ofApp::draw(){
                     ofTranslate(effectOffset);
                     //ofScale(effectScale, effectScale, effectScale);
                     
-                    //ofRotateY(cam.getOrientationEuler().y);
-                    //ofRotateZ(cam.getOrientationEuler().z);
-                    
-                    if(activeEffectModels.size() > 0) {
-                        
-                        if(activeEffectTextures.size() > 0  && activeEffectTextures[0]->isAllocated()) {
-                            
-                            activeEffectTextures[0]->bind();
+                    effectTextureFader.begin(); {
+                        if(activeEffectModels.size() > 0) {
                             activeEffectModels[0]->vboMeshes[0].drawFaces();
-                            
-                            
-                            activeEffectTextures[0]->unbind();
                         }
-                    }
-                    
-                    ofDrawSphere(0, 0, 400);
-                    
-                    
-                    //ofFill();
-                    //ofSetColor(255,0,0);
+                    } effectTextureFader.end();
                     
                 } ofPopStyle();
             } ofPopMatrix();
@@ -405,9 +351,10 @@ void ofApp::draw(){
         } cam.end();
         
         ofDisableDepthTest();
-        //ofDisableLighting();
+        if(directSyphon > 0) {
+            landscapeTextureFader.draw(masterOutFbo.getWidth(), masterOutFbo.getHeight(), directSyphon);
+        }
         
-        //ofDisableNormalizedTexCoords();
         
     } masterOutFbo.end();
     
@@ -427,28 +374,11 @@ void ofApp::draw(){
     guiPanel.draw();
     
     ofSetColor(255,255,255);
-    //ofCircle(mouseX,mouseY, 2);
-    
-     /*if(activeModelTextures.size() > 0 && activeModelTextures[0]->isAllocated()) {
-     activeModelTextures[0]->getTextureReference().draw(0,0);
-     }*/
-    
-    if(landTexCurrent != NULL) {
-        landTexCurrent->draw(0,0,50,50);
-    }
-    if(landTexWait != NULL) {
-        landTexWait->draw(50,0,50,50);
-    }
-    if(landTexFadeTo != NULL) {
-        landTexFadeTo->draw(100,0,50,50);
-    }
     
     for(int i=0; i<syphonTextures.size(); i++) {
-        syphonTextures[i].updateFbo();
         
         if(syphonTextures[i].armed && syphonTextures[i].client) {
             syphonTextures[i].client->draw(150+(50*i), 0, 50, 50);
-            //syphonTextures[i].fbo.getTextureReference().draw(150+(50*i), 0, 50, 50);
         }
     }
     
