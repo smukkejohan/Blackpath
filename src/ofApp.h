@@ -9,6 +9,7 @@
 #include "ofxCubeMap.h"
 #include "ofxXmlSettings.h"
 #include "ofxTween.h"
+#include "ofxBiquadFilter.h"
 
 // 1. load images an create thumbnails
 // 2. load models and create thumbnails
@@ -689,7 +690,7 @@ public:
     
     // cam settings
     ofParameter<float> camFarClip;
-    ofParameter<ofVec3f> camOrientation;
+    ofParameter<ofVec3f> camOrientationRef;
     ofParameter<ofVec3f> camOffset;
     ofParameter<float> camSpeed;
     ofParameter<float> camFov;
@@ -743,4 +744,9 @@ public:
     
     void drawLandscape();
     void drawLandscapeVboMeshes(Model * m, float fade, bool prim);
+
+    ofxBiquadFilter3f camOrientationFilter;
+    ofVec3f camOrientation;
+    ofVec3f autoCamAccumOrientation;
+    
 };

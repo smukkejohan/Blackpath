@@ -102,7 +102,7 @@ void ofApp::setup(){
     camParams.setName("Camera");
     camParams.add(camFarClip.set("FarClip", 4000.0, 1, 20000));
     camParams.add(camNearClip.set("NearClip", 8.0, 0.0, 200));
-    camParams.add(camOrientation.set("Orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    camParams.add(camOrientationRef.set("Orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
     camParams.add(camSpeed.set("Speed", 0, -1, 1));
     camParams.add(camFov.set("Fov", 60, 0, 300));
     camParams.add(camOffset.set("Start Offset", ofVec3f(0,100,0), ofVec3f(-2000,-2000,-2000), ofVec3f(200,200,200)));
@@ -112,6 +112,7 @@ void ofApp::setup(){
     camParams.add(effectOrientation.set("Effect orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
     
     camParams.add(autoCameraRotation.set("Auto Camera Rotation", false));
+    camParams.add(autoCamSpeed.set("Auto orientation speed", ofVec3f(0,0,0), ofVec3f(-1,-1,-1), ofVec3f(1,1,1)));
     zTravel = 0;
     
     guiPanel.setup(camParams);
@@ -142,6 +143,8 @@ void ofApp::setup(){
     effectTextureFader.setup();
     skyTextureFader.setup();
     secondaryTextureFader.setup();
+    
+    camOrientationFilter = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
 }
 
 
@@ -149,6 +152,15 @@ void ofApp::setup(){
 void ofApp::update(){
 
     ofShowCursor();
+    
+    if(autoCameraRotation) {
+        camOrientation += (autoCamSpeed.get() * ofGetLastFrameTime() * 1000);
+    } else {
+        camOrientation = camOrientationRef.get();
+    }
+    
+    cam.setOrientation(camOrientationFilter.updateDegree(camOrientation + camOrientationRef.get()));
+    
     
     if(clearLandscape) {
         landscapeFader.clear();
@@ -158,47 +170,15 @@ void ofApp::update(){
     // handle transitions
     
     cam.setFarClip(camFarClip);
-    cam.setOrientation(camOrientation);
     cam.setFov(camFov);
     cam.setNearClip(camNearClip);
     zTravel -= camSpeed * ofGetLastFrameTime() * 1000;
+    
+
+    
+    
+    
     cam.setPosition(camRefPos + camOffset.get() + ofVec3f(0,0,zTravel));
-    
-    //cout<<"landscapes: "<<activeLandscapes.size()<<endl;
-    
-    /*if(activeLandscapes.empty()) {
-        modelOffset = ofVec3f(0,0,cam.getPosition().z);
-    }*/
-    
-    // Remove landscapes behind us that are out of sight
-    /*if(activeLandscapes.size() > 1) {
-        float z = activeLandscapes.front()->getSceneMin().z;
-        float lz = z + modelOffset.z;
-        float dist = lz - cam.getPosition().z;
-        
-        if(dist > cam.getFarClip()) {
-            //cout<<"pop front landscape out of sight"<<endl;
-            activeLandscapes.pop_front();
-            modelOffset.z += z;
-        }
-    }*/
-    
-    /*modelEndOffset = modelOffset;
-    for(int i=0; i<activeLandscapes.size(); i++) {
-        modelEndOffset.z += activeLandscapes[i]->getSceneMin().z;
-    }
-    
-    // Loop landscapes infront of us if we are about to reach the void
-    if(activeLandscapes.size() > 0) {
-        float z = activeLandscapes.back()->getSceneMax().z;
-        float lz = z + modelEndOffset.z;
-        
-        float dist = cam.getPosition().z - lz;
-        if(dist < cam.getFarClip()*1.4) {
-            //cout<<"loop landscape ahead"<<endl;
-            activeLandscapes.push_back(activeLandscapes.back());
-        }
-    }*/
     
     
     // load images in parallel thread one image at a time
