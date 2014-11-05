@@ -93,6 +93,7 @@ public:
     
     SyphonTexture() {
         thumbFbo.allocate(50, 50);
+        client = NULL;
     };
     
     void arm(ofxSyphonClient * _client) {
@@ -115,9 +116,10 @@ public:
         if(!bChanged && _width == thumb.getWidth() && _height == thumb.getHeight()) return &thumb;
         
             thumbFbo.begin();
-            if(client && client->getTexture().isAllocated()) {
+            if(client && client->isSetup() && client->getTexture().isAllocated()) {
                 //todo - this is not working
-                client->draw(0,0);
+                //client->draw(0,0);
+                ofBackground(0, 255, 0);
             } else {
                 ofBackground(255, 0, 0);
             }
@@ -358,7 +360,9 @@ public:
             thumbs[i]->hover = thumbs[i]->rect.inside(args.x, args.y);
         }
     };
-    
+    void mouseScrolled(ofMouseEventArgs &args){
+        
+    };
     void mouseReleased(ofMouseEventArgs &args) {
             for(int i=0; i< thumbs.size(); i++) {
                 thumbs[i]->selected = false;
@@ -415,7 +419,6 @@ public:
     //int rows;
     //int columns;
     vector<Thumb *> thumbs;
-
     
 private:
     Thumb * selectedThumb;
@@ -431,6 +434,85 @@ private:
     
 };
 
+class ModelFader {
+public:
+    
+    ModelFader() {
+        models.resize(3);
+        transitionDuraion.set("Duration", 1000, 0, 20000);
+    }
+    
+    void draw() {
+        ofPushMatrix();
+        if(getCurrent() && getCurrent()->hasMeshes()) {
+            ofScale(1-tween.update(),1-tween.update());
+            getCurrent()->vboMeshes[0].draw();
+        }
+        ofPopMatrix();
+        
+        ofPushMatrix();
+        if(getNext() && getNext()->hasMeshes()) {
+            ofScale(tween.update(), tween.update());
+            
+            getNext()->vboMeshes[0].draw();
+        }
+        ofPopMatrix();
+    }
+    
+    void update() {
+        if(tween.isCompleted() && getNext() != NULL) {
+            setCurrent(getNext());
+            setNext(NULL);
+            tween = ofxTween();
+        }
+        
+        if(getWait() != NULL && !tween.isRunning() && getNext() == NULL) {
+            setNext(getWait());
+            setWait(NULL);
+            tween.setParameters(1,easinglinear,ofxTween::easeIn,0.0,1.0,transitionDuraion,0);
+        }
+    };
+    
+    void setCurrent(Model * _mod) {
+        models[0] = _mod;
+    }
+    
+    void setNext(Model * _mod) {
+        models[1] = _mod;
+    }
+    
+    void setWait(Model * _mod) {
+        models[2] = _mod;
+    }
+    
+    Model * getCurrent() {
+        return models[0];
+    };
+    
+    Model * getNext() {
+        return models[1];
+    };
+    
+    Model * getWait() {
+        return models[2];
+    };
+    
+    void clear() {
+        bClear = true;
+    };
+    
+    ofParameter<float> transitionDuraion;
+
+    ofxTween tween;
+
+private:
+    bool bClear;
+    vector<Model *> models; // current, fadeto, wait
+    ofxEasingLinear easinglinear;
+    string transitionType = "fade"; //todo: scale, morph
+    
+};
+
 class TextureFader {
 public:
     
@@ -438,12 +520,11 @@ public:
         useShader = _useShader;
         textures.resize(3);
         transitionDuraion.set("Duration", 1000, 0, 20000);
-        if(useShader) shader.load("shadersGL2/shader");
     }
     
-    void setup(){
-        
-    };
+    void setup() {
+        if(useShader) shader.load(ofToDataPath("shadersGL2/shader"));
+    }
     
     void begin() {
         shader.begin();
@@ -451,14 +532,15 @@ public:
         shader.setUniform1f("fadeToB", tween.update());
             
         if(getCurrent() && getCurrent()->isAllocated() ){
-                shader.setUniformTexture("tex0", *getCurrent(), 1);
-                shader.setUniform2f("aTexSize", ofVec2f(getCurrent()->getWidth(), getCurrent()->getHeight()));
+            shader.setUniformTexture("tex0", *getCurrent(), 1);
+            shader.setUniform2f("aTexSize", ofVec2f(getCurrent()->getWidth(), getCurrent()->getHeight()));
         }
             
         if(getNext() &&  getNext()->isAllocated() ){
-                shader.setUniform2f("bTexSize", ofVec2f(getNext()->getWidth(), getNext()->getHeight()));
-                shader.setUniformTexture("tex1", *getNext(), 2);
+            shader.setUniform2f("bTexSize", ofVec2f(getNext()->getWidth(), getNext()->getHeight()));
+            shader.setUniformTexture("tex1", *getNext(), 2);
         }
+        
     }
     
     void end() {
@@ -476,10 +558,17 @@ public:
             ofSetColor(255,255,255,fade*255*tween.update());
             getNext()->draw(0, 0, _width, _height);
         }
-        
     }
     
     void update() {
+        
+        if(setClear) {
+            setNext(NULL);
+            setWait(NULL);
+            // todo - fade it out
+            setCurrent(NULL);
+        }
+        
         if(tween.isCompleted() && getNext() != NULL) {
             setCurrent(getNext());
             setNext(NULL);
@@ -517,6 +606,10 @@ public:
         return textures[2];
     };
     
+    void clear() {
+
+    }
+    
     ofParameter<float> transitionDuraion;
     
 private:
@@ -525,15 +618,9 @@ private:
     ofxEasingLinear easinglinear;
     ofShader shader;
     bool useShader;
+    bool setClear;
     
 };
-
-//class SkyBoxImage
-//class ModelTextureImage
-
-//class Base3DModel
-// load method creates a thumbnail
-// check if image loading stalls maybe do load image threaded
 
 class ofApp : public ofBaseApp{
     
@@ -554,9 +641,6 @@ public:
     void gotMessage(ofMessage msg);
     
     void thumbEventListener(ThumbSelectorEventData& args);
-    // todo:
-    // master fader
-    // syphon in
     
     ofFbo masterOutFbo;
     ofCamera cam;
@@ -583,24 +667,24 @@ public:
     TextureFader effectTextureFader;
     TextureFader skyTextureFader;
     
-    // todo same thing as with landTex
-    vector<Texture *> activeSkyTextures;
-    vector<Texture *> activeEffectTextures;
+    //deque<Model *> activeLandscapes;
     
-    vector<Model *> activeLandscapes;
-    vector<Model *> activeEffectModels;
-        
+    ModelFader landscapeFader;
+    ModelFader effectModelFader;
+    
     ofLight light;
     
     ofVec3f travelPos;
     ofVec3f basePos;
     ofVec3f modelOffset;
+    ofVec3f modelEndOffset;
+    
+    ofVec3f landScapeRefPos;
     
     ofxCubeMap cubeMap;
     ofxUICanvas * gui;
     void guiEvent(ofxUIEventArgs &e);
     ofImage tmpLoadingImage;
-    
     ofxSyphonServer syphonOut;
     
     // cam settings
@@ -616,6 +700,26 @@ public:
     
     ofParameter<ofVec3f> effectOffset;
     ofParameter<float>  effectScale;
+    
+    // todo:
+    ofParameter<ofVec3f> effectOrientation;
+    ofParameter<ofVec3f> effectReplicator;
+    
+    ofParameter<float> autoSpeed;
+    
+    ofParameter<bool> autoCameraRotation;
+    
+    ofParameter<ofVec3f> autoCamSpeed;
+    
+    ofParameter<ofVec3f> autoEffectRotSpeed;
+    
+    ofParameter<bool> autoCameraOffset;
+    
+    ofParameter<bool> autoEffectRotation;
+    ofParameter<bool> autoEffectScale;
+    
+    ofParameter<bool> clearLandscape;
+    ofParameter<bool> clearEffect;
     
     ofParameterGroup camParams;
     
@@ -633,15 +737,10 @@ public:
     
     ofxXmlSettings settings;
     
-    ofShader landscapeTextureShader;
-    ofShader secondaryTextureShader;
-    ofShader effectTextureShader;
-    ofShader skyBoxTextureShader;
-    
     ofFbo testfbo;
     
-    //ofxSyphonClient syphonClient;
-    //ofxSyphonClient syphonClient2;
-
-
+    ofxTween effectTween;
+    
+    void drawLandscape();
+    void drawLandscapeVboMeshes(Model * m, float fade, bool prim);
 };

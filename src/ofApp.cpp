@@ -3,6 +3,15 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+    
+#ifdef OF_RELEASE
+    ofSetDataPathRoot("../Resources/Data/");
+    ofSetWorkingDirectoryToDefault();
+    
+    ofSetLogLevel(OF_LOG_FATAL_ERROR);
+    cout << "data path root: " <<  ofToDataPath("", true)  << endl;
+#endif
+    
     glEnable(GL_TEXTURE_2D);
     
     ofShowCursor();
@@ -37,7 +46,7 @@ void ofApp::setup(){
     gui->addFPSSlider("FPS");
     gui->autoSizeToFitWidgets();
     gui->setPosition(ofGetWidth()-gui->getRect()->width, ofGetHeight()-gui->getRect()->height);
-    settings.load("settings.xml");
+    settings.load(ofToDataPath("settings.xml"));
     
     int texTags = settings.getNumTags("texture");
     for(int i=0; i<texTags; i++) {
@@ -91,19 +100,18 @@ void ofApp::setup(){
     
     syphonOut.setName("Landscape");
     camParams.setName("Camera");
-    camParams.add(camFarClip.set("FarClip", 18000.0f, 1, 20000));
-    camParams.add(camNearClip.set("NearClip", 20.0f, 0.0, 200));
+    camParams.add(camFarClip.set("FarClip", 4000.0, 1, 20000));
+    camParams.add(camNearClip.set("NearClip", 8.0, 0.0, 200));
     camParams.add(camOrientation.set("Orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
-    camParams.add(camSpeed.set("Speed", 0, 0, 1));
+    camParams.add(camSpeed.set("Speed", 0, -1, 1));
     camParams.add(camFov.set("Fov", 60, 0, 300));
-    camParams.add(camOffset.set("Start Offset", ofVec3f(0,100,0), ofVec3f(-200,-200,-200), ofVec3f(200,200,200)));
-    
+    camParams.add(camOffset.set("Start Offset", ofVec3f(0,100,0), ofVec3f(-2000,-2000,-2000), ofVec3f(200,200,200)));
     camParams.add(directSyphon.set("Direct Syphon", 0, 0, 1));
-    
-    camParams.add(effectOffset.set("effect offset", ofVec3f(0,0,-3000), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,5000)));
-    
+    camParams.add(effectOffset.set("effect offset", ofVec3f(0,0,0), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,5000)));
     camParams.add(effectScale.set("effect scale", 1, 0, 1));
+    camParams.add(effectOrientation.set("Effect orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
     
+    camParams.add(autoCameraRotation.set("Auto Camera Rotation", false));
     zTravel = 0;
     
     guiPanel.setup(camParams);
@@ -121,7 +129,6 @@ void ofApp::setup(){
     //ofAddListener(dir.events.serverUpdated, this, &testApp::serverUpdated);
     ofAddListener(dir.events.serverRetired, this, &ofApp::serverRetired);
     
-
     testfbo.allocate(512,512);
     
     testfbo.begin(); {
@@ -131,14 +138,22 @@ void ofApp::setup(){
     
     camRefPos = cam.getPosition();
     
+    landscapeTextureFader.setup();
+    effectTextureFader.setup();
+    skyTextureFader.setup();
+    secondaryTextureFader.setup();
 }
 
 
 //--------------------------------------------------------------
 void ofApp::update(){
+
+    ofShowCursor();
     
-    
-    
+    if(clearLandscape) {
+        landscapeFader.clear();
+    }
+    // todo offset next model to cam pos
     
     // handle transitions
     
@@ -148,6 +163,43 @@ void ofApp::update(){
     cam.setNearClip(camNearClip);
     zTravel -= camSpeed * ofGetLastFrameTime() * 1000;
     cam.setPosition(camRefPos + camOffset.get() + ofVec3f(0,0,zTravel));
+    
+    //cout<<"landscapes: "<<activeLandscapes.size()<<endl;
+    
+    /*if(activeLandscapes.empty()) {
+        modelOffset = ofVec3f(0,0,cam.getPosition().z);
+    }*/
+    
+    // Remove landscapes behind us that are out of sight
+    /*if(activeLandscapes.size() > 1) {
+        float z = activeLandscapes.front()->getSceneMin().z;
+        float lz = z + modelOffset.z;
+        float dist = lz - cam.getPosition().z;
+        
+        if(dist > cam.getFarClip()) {
+            //cout<<"pop front landscape out of sight"<<endl;
+            activeLandscapes.pop_front();
+            modelOffset.z += z;
+        }
+    }*/
+    
+    /*modelEndOffset = modelOffset;
+    for(int i=0; i<activeLandscapes.size(); i++) {
+        modelEndOffset.z += activeLandscapes[i]->getSceneMin().z;
+    }
+    
+    // Loop landscapes infront of us if we are about to reach the void
+    if(activeLandscapes.size() > 0) {
+        float z = activeLandscapes.back()->getSceneMax().z;
+        float lz = z + modelEndOffset.z;
+        
+        float dist = cam.getPosition().z - lz;
+        if(dist < cam.getFarClip()*1.4) {
+            //cout<<"loop landscape ahead"<<endl;
+            activeLandscapes.push_back(activeLandscapes.back());
+        }
+    }*/
+    
     
     // load images in parallel thread one image at a time
     if(textureQueue.size() > 0) {
@@ -194,6 +246,8 @@ void ofApp::update(){
     effectTextureFader.update();
     skyTextureFader.update();
     secondaryTextureFader.update();
+    effectModelFader.update();
+    landscapeFader.update();
     
     // todo add listener for selector things that require independent logic
     
@@ -238,25 +292,93 @@ void ofApp::thumbEventListener(ThumbSelectorEventData& args) {
         } else if(args.title == "Model") {
             
             if(ofGetKeyPressed('1')) {
-                activeLandscapes.push_back(&models[args.thumbNum]);
+                landscapeFader.setWait(&models[args.thumbNum]);
             }
             
             if(ofGetKeyPressed('2')) {
-                activeEffectModels.push_back(&models[args.thumbNum]);
+                effectModelFader.setWait(&models[args.thumbNum]);
             }
             
         }
     }
 }
 
+
+
+void ofApp::drawLandscapeVboMeshes(Model * m, float fade, bool prim = true) {
+    if(m == NULL || !m->hasMeshes()) return;
+    
+        ofPushMatrix();{
+            // tile forward and backward to far clip
+            float zMin = m->getSceneMin().z;
+            int tileN = ceil((cam.getFarClip()*2) / abs(zMin)) + 2;
+            
+            ofTranslate(ofVec3f(0,0,floor(cam.getPosition().z / zMin) * zMin));
+            //cout<<floor(cam.getPosition().z / zMin) * zMin<<endl;
+            
+            for(int i=0; i<tileN; i++) {
+                ofPushMatrix(); {
+                    ofTranslate(0, 0, (zMin*i) - ((tileN/2) * zMin) );
+                    
+                    ofScale(fade,fade,fade);
+                    if(prim) {
+                        m->vboMeshes[0].draw();
+                    } else {
+                        for(int i=1; i <m->vboMeshes.size(); i++) {
+                            
+                            m->vboMeshes[i].draw();
+                            
+                        }
+                    }
+                }ofPopMatrix();
+            }
+        }ofPopMatrix();
+}
+
+
+void ofApp::drawLandscape() {
+    
+    ofPushMatrix(); {
+        ofTranslate(modelOffset);
+        
+        ofVec3f off = ofVec3f(0,0,0);
+        ofPushMatrix(); {
+            ofTranslate(off);
+            ofPushMatrix(); {
+                
+                ofTranslate(masterOutFbo.getWidth()/2,masterOutFbo.getHeight()/2);
+                
+                landscapeTextureFader.begin();{
+                    
+                    drawLandscapeVboMeshes(landscapeFader.getCurrent(), 1-landscapeFader.tween.update(), true);
+                    drawLandscapeVboMeshes(landscapeFader.getNext(), landscapeFader.tween.update(), true);
+                    
+                } landscapeTextureFader.end();
+                
+                secondaryTextureFader.begin();{
+                    
+                    drawLandscapeVboMeshes(landscapeFader.getCurrent(), 1-landscapeFader.tween.update(), false);
+                    drawLandscapeVboMeshes(landscapeFader.getNext(), landscapeFader.tween.update(), false);
+                    
+                } secondaryTextureFader.end();
+                
+                
+            }ofPopMatrix();
+            
+            
+        } ofPopMatrix();
+        
+    } ofPopMatrix();
+    
+    
+    
+}
+
 //--------------------------------------------------------------
 void ofApp::draw(){
     
-
-    
     ofEnableAlphaBlending();
     //ofDisableArbTex();
-    
     
     for( int i = 0; i < 6; i++ )
     {
@@ -295,55 +417,37 @@ void ofApp::draw(){
         } skyboxcam.end();
         
         cam.begin(); {
-            landscapeTextureFader.begin();{
-                ofPushMatrix(); {
-                    ofTranslate(modelOffset);
-                    
-                    ofVec3f off = ofVec3f(0,0,0);
-                    
-                    for(int i=0; i< activeLandscapes.size(); i++) {
-                        ofPushMatrix(); {
-                            ofTranslate(off);
-                            ofPushMatrix(); {
-                                
-                                ofTranslate(masterOutFbo.getWidth()/2,masterOutFbo.getHeight()/2);
-                                
-                                for(int ii=0; ii <activeLandscapes[i]->vboMeshes.size(); ii++) {
-                                    
-                                    // todo: wireframe / shaded
-                                    activeLandscapes[i]->vboMeshes[ii].setMode(OF_PRIMITIVE_TRIANGLES);
-                                
-                                    activeLandscapes[i]->vboMeshes[ii].draw();
-                                    
-                                
-                                }
-                            }ofPopMatrix();
-                            
-                            off.z += activeLandscapes[i]->getSceneMin().z;
-                            
-                        } ofPopMatrix();
-                    }
-                } ofPopMatrix();
-                
-            } landscapeTextureFader.end();
+            
+            drawLandscape();
+            
             
             ofPushMatrix(); {
                 ofPushStyle(); {
-                    
                     ofTranslate(cam.getPosition());
                     float a, x,y,z;
                     cam.getOrientationQuat().getRotate(a, x, y, z);
-                    
                     ofRotate(a, x, y, z);
                     
-                    ofTranslate(effectOffset);
-                    //ofScale(effectScale, effectScale, effectScale);
+                    ofTranslate(effectOffset.get());
+                    
+                    if(effectModelFader.getCurrent()) {
+                        ofScale(effectScale, effectScale, effectScale);
+                    }
+                    
+                    ofRotateX(effectOrientation.get().x);
+                    ofRotateY(effectOrientation.get().y);
+                    ofRotateZ(effectOrientation.get().z);
+                    
+                    //ofSetColor(255,0,0);
+                    //ofDrawSphere(0, 0, 20);
                     
                     effectTextureFader.begin(); {
-                        if(activeEffectModels.size() > 0) {
-                            activeEffectModels[0]->vboMeshes[0].drawFaces();
-                        }
+                        //for(int i=0; i < effectReplicator.get().x; i++) {
+                        //    ofTranslate(100, 0);
+                        effectModelFader.draw();
+                        //}
                     } effectTextureFader.end();
+                    
                     
                 } ofPopStyle();
             } ofPopMatrix();
@@ -381,6 +485,8 @@ void ofApp::draw(){
             syphonTextures[i].client->draw(150+(50*i), 0, 50, 50);
         }
     }
+    string guide = "Drag and drop image files or 3d models into the window to add them to the file picker.\n\nTo select textures click the texture while holding down keys:\n [1]: to Add as primary texture.\n [2]: to add as secondary texture. \n [3]: To add as effect texture. \n [4]: to add as skybox texture. \n\nTo select models click the model while holding down keys: \n [1]: To add as landscape. \n [2]: to add as effect model.";
+    ofDrawBitmapString(guide, ofGetWidth()-700, ofGetHeight()-200);
     
     syphonOut.publishTexture(&masterOutFbo.getTextureReference());
 }
@@ -484,7 +590,7 @@ void ofApp::exit() {
         settings.popTag();
     }
     
-    settings.save("settings.xml");
+    settings.save(ofToDataPath("settings.xml"));
     
     delete gui;
 }
