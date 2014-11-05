@@ -102,12 +102,12 @@ void ofApp::setup(){
     
     camParams.setName("Camera");
     camParams.add(camSpeed.set("Speed", 0, -1, 1));
-    camParams.add(camFov.set("Fov", 60, 0, 300));
+    camParams.add(camFov.set("Fov", 50, 4, 160));
     camParams.add(camFarClip.set("FarClip", 4000.0, 1, 20000));
     camParams.add(camNearClip.set("NearClip", 8.0, 0.0, 200));
-    camParams.add(camOffset.set("Offset", ofVec3f(0,100,0), ofVec3f(-2000,-2000,-2000), ofVec3f(200,200,200)));
+    camParams.add(camOffset.set("Offset", ofVec3f(0,100,0), ofVec3f(-2000,-2000,-2000), ofVec3f(2000,2000,2000)));
     
-    camParams.add(camOrientationRef.set("Orientation Reference", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    camParams.add(camOrientationRef.set("Orientation Ref", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
 
 
     camParams.add(autoCameraRotation.set("Auto Camera Orientation", false));
@@ -116,7 +116,10 @@ void ofApp::setup(){
     effectParams.setName("Effect Model");
     effectParams.add(effectOffset.set("Offset", ofVec3f(0,0,-100), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,5000)));
     effectParams.add(effectScale.set("Scale", 1, 0, 1));
-    effectParams.add(effectOrientation.set("Orientation ref", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    effectParams.add(bAutoEffectRotation.set("Auto rotation", false));
+    effectParams.add(effectOrientationRef.set("Rotation ref", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    
+    effectParams.add(autoEffectRotSpeed.set("Auto rot speed", ofVec3f(0,0,0), ofVec3f(-1,-1,-1), ofVec3f(1,1,1)));
     
     otherParams.setName("Other");
     otherParams.add(directSyphon.set("Syphon direct out", 0, 0, 1));
@@ -167,29 +170,26 @@ void ofApp::update(){
     ofShowCursor();
     
     if(autoCameraRotation) {
-        camOrientation += (autoCamSpeed.get() * ofGetLastFrameTime() * 1000);
+        camOrientation += (autoCamSpeed.get() * ofGetLastFrameTime() * 100);
     } else {
         camOrientation = camOrientationRef.get();
     }
     
     cam.setOrientation(camOrientationFilter.updateDegree(camOrientation + camOrientationRef.get()));
     
+
     
-    if(clearLandscape) {
-        landscapeFader.clear();
+    if(bAutoEffectRotation) {
+        effectOrientation += (autoEffectRotSpeed.get() * ofGetLastFrameTime() * 100);
+    } else {
+        effectOrientation = effectOrientationRef.get();
     }
-    // todo offset next model to cam pos
     
-    // handle transitions
     
     cam.setFarClip(camFarClip);
     cam.setFov(camFov);
     cam.setNearClip(camNearClip);
     zTravel -= camSpeed * ofGetLastFrameTime() * 1000;
-    
-
-    
-    
     
     cam.setPosition(camRefPos + camOffset.get() + ofVec3f(0,0,zTravel));
     
@@ -374,15 +374,18 @@ void ofApp::drawEffectModel(Model * m, float fade) {
     
         ofTranslate(-m->getSceneCenter());
     
+    ofVec3f filteredRot = effectOrientationFilter.updateDegree(effectOrientation + effectOrientationRef.get());
+    ofRotateX(filteredRot.x);
+    ofRotateY(filteredRot.y);
+    ofRotateZ(filteredRot.z);
+    
         ofScale(effectScale, effectScale, effectScale);
     
-    ofDrawGrid();
+        //ofDrawGrid();
     
         ofScale(fade,fade,fade);
 
         m->vboMeshes[0].draw();
-
-
     
     ofPopMatrix();
     
@@ -444,10 +447,7 @@ void ofApp::draw(){
                     
                     ofTranslate(effectOffset.get());
                     
-                    ofRotateX(effectOrientation.get().x);
-                    ofRotateY(effectOrientation.get().y);
-                    ofRotateZ(effectOrientation.get().z);
-                    
+                    // where is the center?
                     //ofSetColor(255,0,0);
                     //ofDrawSphere(0, 0, 20);
                     
@@ -496,7 +496,7 @@ void ofApp::draw(){
             syphonTextures[i].client->draw(150+(50*i), 0, 50, 50);
         }
     }
-    string guide = "Drag and drop image files or 3d models into the window to add them to the file picker.\n\nTo select textures click the texture while holding down keys:\n [1]: to Add as primary texture.\n [2]: to add as secondary texture. \n [3]: To add as effect texture. \n [4]: to add as skybox texture. \n\nTo select models click the model while holding down keys: \n [1]: To add as landscape. \n [2]: to add as effect model.";
+    string guide = "Drag and drop image files or 3d models into the window to add them to the file picker.\n\nTo select textures click the texture while holding down keys:\n [1]: to Add as primary texture.\n [2]: to add as secondary texture. \n [3]: To add as effect texture. \n [4]: To add as skybox texture. \n\nTo select models click the model while holding down keys: \n [1]: To add as landscape. \n [2]: To add as effect model.";
     ofDrawBitmapString(guide, ofGetWidth()-700, ofGetHeight()-200);
     
     syphonOut.publishTexture(&masterOutFbo.getTextureReference());

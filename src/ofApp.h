@@ -702,8 +702,7 @@ public:
     ofParameter<ofVec3f> effectOffset;
     ofParameter<float>  effectScale;
     
-    // todo:
-    ofParameter<ofVec3f> effectOrientation;
+    // todo
     ofParameter<ofVec3f> effectReplicator;
     
     ofParameter<float> autoSpeed;
@@ -712,15 +711,9 @@ public:
     
     ofParameter<ofVec3f> autoCamSpeed;
     
-    ofParameter<ofVec3f> autoEffectRotSpeed;
+    
     
     ofParameter<bool> autoCameraOffset;
-    
-    ofParameter<bool> autoEffectRotation;
-    ofParameter<bool> autoEffectScale;
-    
-    ofParameter<bool> clearLandscape;
-    ofParameter<bool> clearEffect;
     
     ofParameterGroup camParams;
     
@@ -758,6 +751,10 @@ public:
     ofVec3f camOrientation;
 
     ofxBiquadFilter3f effectOrientationFilter;
+    ofParameter<bool> bAutoEffectRotation;
+    ofParameter<ofVec3f> autoEffectRotSpeed;
+    ofParameter<ofVec3f> effectOrientationRef;
+    ofVec3f effectOrientation;
     
     
 };
