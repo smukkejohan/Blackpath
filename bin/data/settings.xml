@@ -1,11 +1,11 @@
 <texture>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/79a3150c0767fd7d04d02f148fb5db97.jpg</path>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/assets/models/79a3150c0767fd7d04d02f148fb5db97.jpg</path>
 </texture>
 <texture>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/10d6b84cbd3c135aa149e8bf5ea1afc7.jpg</path>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/assets/models/10d6b84cbd3c135aa149e8bf5ea1afc7.jpg</path>
 </texture>
 <texture>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/9e913aec373c219ac4f9224b3b79d0cc.jpg</path>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/assets/models/9e913aec373c219ac4f9224b3b79d0cc.jpg</path>
 </texture>
 <texture>
     <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data</path>
@@ -125,7 +125,13 @@
     <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data</path>
 </texture>
 <model>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/reaftaledarkmattersjohanbichel/WSGM testjohan2.obj</path>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/assets/models/reaftaledarkmattersjohanbichel/WSGM testjohan2.obj</path>
+</model>
+<model>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/assets/models/reaftaledarkmattersjohanbichel/WSGM testjohan1.obj</path>
+</model>
+<model>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/assets/models/reaftaledarkmattersjohanbichel/WSGM testjohan3.obj</path>
 </model>
 <model>
     <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data</path>
@@ -215,13 +221,7 @@
     <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data</path>
 </model>
 <model>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/reaftaledarkmattersjohanbichel/WSGM testjohan3.obj</path>
-</model>
-<model>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/reaftaledarkmattersjohanbichel/WSGM testjohan1.obj</path>
-</model>
-<model>
-    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data/models/reaftaledarkmattersjohanbichel/WSGM testjohan2.obj</path>
+    <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data</path>
 </model>
 <model>
     <path>/Users/johan/Development/openFrameworks/apps/myApps/Blackpath/bin/data</path>

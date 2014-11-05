@@ -724,6 +724,12 @@ public:
     
     ofParameterGroup camParams;
     
+    ofParameterGroup effectParams;
+    
+    ofParameterGroup landscapeParams;
+    
+    ofParameterGroup otherParams;
+    
     ofxPanel guiPanel;
     
     ofxSyphonServerDirectory dir;
@@ -744,9 +750,14 @@ public:
     
     void drawLandscape();
     void drawLandscapeVboMeshes(Model * m, float fade, bool prim);
+    
+    
+    void drawEffectModel(Model * model, float fade);
 
     ofxBiquadFilter3f camOrientationFilter;
     ofVec3f camOrientation;
-    ofVec3f autoCamAccumOrientation;
+
+    ofxBiquadFilter3f effectOrientationFilter;
+    
     
 };
