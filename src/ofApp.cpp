@@ -99,23 +99,34 @@ void ofApp::setup(){
     }
     
     syphonOut.setName("Landscape");
+    
     camParams.setName("Camera");
-    camParams.add(camFarClip.set("FarClip", 4000.0, 1, 20000));
-    camParams.add(camNearClip.set("NearClip", 8.0, 0.0, 200));
-    camParams.add(camOrientationRef.set("Orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
     camParams.add(camSpeed.set("Speed", 0, -1, 1));
     camParams.add(camFov.set("Fov", 60, 0, 300));
-    camParams.add(camOffset.set("Start Offset", ofVec3f(0,100,0), ofVec3f(-2000,-2000,-2000), ofVec3f(200,200,200)));
-    camParams.add(directSyphon.set("Direct Syphon", 0, 0, 1));
-    camParams.add(effectOffset.set("effect offset", ofVec3f(0,0,0), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,5000)));
-    camParams.add(effectScale.set("effect scale", 1, 0, 1));
-    camParams.add(effectOrientation.set("Effect orientation", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    camParams.add(camFarClip.set("FarClip", 4000.0, 1, 20000));
+    camParams.add(camNearClip.set("NearClip", 8.0, 0.0, 200));
+    camParams.add(camOffset.set("Offset", ofVec3f(0,100,0), ofVec3f(-2000,-2000,-2000), ofVec3f(200,200,200)));
     
-    camParams.add(autoCameraRotation.set("Auto Camera Rotation", false));
+    camParams.add(camOrientationRef.set("Orientation Reference", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+
+
+    camParams.add(autoCameraRotation.set("Auto Camera Orientation", false));
     camParams.add(autoCamSpeed.set("Auto orientation speed", ofVec3f(0,0,0), ofVec3f(-1,-1,-1), ofVec3f(1,1,1)));
+    
+    effectParams.setName("Effect Model");
+    effectParams.add(effectOffset.set("Offset", ofVec3f(0,0,-100), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,5000)));
+    effectParams.add(effectScale.set("Scale", 1, 0, 1));
+    effectParams.add(effectOrientation.set("Orientation ref", ofVec3f(0,0,0), ofVec3f(-360,-360,-360), ofVec3f(360,360,360)));
+    
+    otherParams.setName("Other");
+    otherParams.add(directSyphon.set("Syphon direct out", 0, 0, 1));
+
     zTravel = 0;
     
-    guiPanel.setup(camParams);
+    guiPanel.setup();
+    guiPanel.add(camParams);
+    guiPanel.add(effectParams);
+    guiPanel.add(otherParams);
     guiPanel.setPosition(1200, 100);
     cam.setupPerspective();
     cam.setVFlip(false);
@@ -145,6 +156,8 @@ void ofApp::setup(){
     secondaryTextureFader.setup();
     
     camOrientationFilter = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
+    
+    effectOrientationFilter = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
 }
 
 
@@ -354,6 +367,27 @@ void ofApp::drawLandscape() {
     
 }
 
+void ofApp::drawEffectModel(Model * m, float fade) {
+    if(m == NULL || !m->hasMeshes()) return;
+    
+    ofPushMatrix();
+    
+        ofTranslate(-m->getSceneCenter());
+    
+        ofScale(effectScale, effectScale, effectScale);
+    
+    ofDrawGrid();
+    
+        ofScale(fade,fade,fade);
+
+        m->vboMeshes[0].draw();
+
+
+    
+    ofPopMatrix();
+    
+}
+
 //--------------------------------------------------------------
 void ofApp::draw(){
     
@@ -410,10 +444,6 @@ void ofApp::draw(){
                     
                     ofTranslate(effectOffset.get());
                     
-                    if(effectModelFader.getCurrent()) {
-                        ofScale(effectScale, effectScale, effectScale);
-                    }
-                    
                     ofRotateX(effectOrientation.get().x);
                     ofRotateY(effectOrientation.get().y);
                     ofRotateZ(effectOrientation.get().z);
@@ -424,7 +454,8 @@ void ofApp::draw(){
                     effectTextureFader.begin(); {
                         //for(int i=0; i < effectReplicator.get().x; i++) {
                         //    ofTranslate(100, 0);
-                        effectModelFader.draw();
+                        drawEffectModel(effectModelFader.getCurrent(), 1-effectModelFader.tween.update());
+                        drawEffectModel(effectModelFader.getNext(), effectModelFader.tween.update());
                         //}
                     } effectTextureFader.end();
                     
