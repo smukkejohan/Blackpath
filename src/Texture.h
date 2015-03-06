@@ -63,7 +63,6 @@ private:
     bool bChanged;
 };
 
-
 class Texture : public BaseImage {
 public:
     

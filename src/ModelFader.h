@@ -9,6 +9,7 @@
 #pragma once
 #include "ofMain.h"
 #include "Model.h"
+#include "Project.h"
 
 class ModelFader {
 public:
@@ -80,6 +81,7 @@ public:
     ofParameter<float> transitionDuraion;
     
     ofxTween tween;
+    Asset asset;
     
 private:
     bool bClear;

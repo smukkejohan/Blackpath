@@ -9,6 +9,36 @@
 #pragma once
 #include "ofMain.h"
 
+
+namespace PARAM { // Parmeter constants / defaults
+    
+    static const float CAM_MIN_SPEED = -1;
+    static const float CAM_MAX_SPEED = 1;
+    
+    static const float CAM_MIN_FOV = 4;
+    static const float CAM_MAX_FOV = 160;
+    
+    static const float CAM_MIN_FAR_CLIP = 1;
+    static const float CAM_MAX_FAR_CLIP = 20000;
+    
+    static const float CAM_MIN_NEAR_CLIP = 0.0;
+    static const float CAM_MAX_NEAR_CLIP = 200.0;
+    
+    
+    static const ofVec2f CAM_MIN_OFFSET = ofVec2f(-500,-500);
+    static const ofVec2f CAM_MAX_OFFSET = ofVec2f(500,500);
+    
+    
+    static const ofVec3f CAM_MIN_ORIENTATION = ofVec3f(120,120,120);
+    static const ofVec3f CAM_MAX_ORIENTATION = ofVec3f(-120,-120,-120);
+    
+    
+    
+    
+};
+
+using namespace PARAM;
+
 // Parameters for a scene
 class Parameters {
 public:
@@ -22,7 +52,7 @@ public:
     
     // Camera parameters
     ofParameter<float>   camFarClip;
-    ofParameter<float>   camNearClip;
+    ofParameter<float>   camNearClip; // maybe a range vec2f
     ofParameter<ofVec3f> camOrientation;
     ofParameter<ofVec2f> camOffset;
     ofParameter<float>   camSpeed;
@@ -54,6 +84,5 @@ public:
     
     // IDEAS
     // debug gui with ofxGui
-    
     
 };

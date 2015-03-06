@@ -9,6 +9,7 @@
 #pragma once
 #include "ofMain.h"
 #include "ofxTween.h"
+#include "Project.h"
 
 class TextureFader {
 public:
@@ -103,6 +104,7 @@ public:
     }
     
     ofParameter<float> transitionDuraion;
+    Asset asset;
     
 private:
     vector<ofTexture *> textures; // current, fadeto, wait

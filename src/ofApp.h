@@ -41,8 +41,6 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     
-
-    
     Project * project;
     Interface * ui;
     

@@ -15,7 +15,6 @@ void Renderer::setupFilters() {
     camOffsetFilter         = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
 }
 
-
 void Renderer::setup() {
     
     landscapeTextureFader = new TextureFader();
@@ -51,8 +50,8 @@ void Renderer::setOutput() {
     // todo make output settings configurable
     
     ofFbo::Settings fboSettings;
-    fboSettings.height = 1920;
-    fboSettings.width  = 1080;
+    fboSettings.height = 1080;
+    fboSettings.width  = 1920;
     fboSettings.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
     fboSettings.numSamples = 8;
     fboSettings.useDepth = true;
@@ -88,48 +87,87 @@ void Renderer::renderLandscape() {
                 
                 landscapeTextureFader->begin();{
                     renderLandscapeVboMeshes(landscapeFader->getCurrent(), 1-landscapeFader->tween.update(), true);
-                    renderLandscapeVboMeshes(landscapeFader->getNext(), landscapeFader->tween.update(), true);
+                    renderLandscapeVboMeshes(landscapeFader->getNext(),      landscapeFader->tween.update(), true);
                     
                 } landscapeTextureFader->end();
                 
                 secondaryTextureFader->begin();{
-                    
                     renderLandscapeVboMeshes(landscapeFader->getCurrent(), 1-landscapeFader->tween.update(), false);
-                    renderLandscapeVboMeshes(landscapeFader->getNext(), landscapeFader->tween.update(), false);
+                    renderLandscapeVboMeshes(landscapeFader->getNext(),      landscapeFader->tween.update(), false);
                     
                 } secondaryTextureFader->end();
                 
                 
-            }ofPopMatrix();
+            } ofPopMatrix();
         } ofPopMatrix();
     } ofPopMatrix();
     
 
 }
 
+void Renderer::setTextureFromAsset(TextureFader * textureFader, Asset _asset) {
+    //cout<<_asset.nid<<"  "<<textureFader->asset.nid<<endl;
+    
+    if(_asset.isSet) {
+        if(textureFader->asset.nid == _asset.nid && textureFader->asset.type == _asset.type) {
+            // no change
+        } else {
+            cout<<"new texture"<<endl;
+            textureFader->setWait(project->getTextureAsset(_asset));
+            textureFader->asset = _asset;
+        }
+    }
+
+}
+
+void Renderer::setModelFromAsset(ModelFader * modelFader, Asset _asset) {
+    
+    if(modelFader->asset.nid == _asset.nid && modelFader->asset.type == _asset.type) {
+        
+    } else {
+        cout<<"new model"<<endl;
+        modelFader->setWait(project->getModelAsset(_asset));
+        modelFader->asset = _asset;
+    }
+    
+}
+
 void Renderer::update() {
-    if(params->bAutoCameraRotation.get()) {
+    
+    Parameters * params = scene->params;
+    
+    // update textures
+    setTextureFromAsset(secondaryTextureFader,  scene->secondaryTexture);
+    setTextureFromAsset(landscapeTextureFader,  scene->landscapeTexture);
+    setTextureFromAsset(effectTextureFader,     scene->effectTexture);
+    setTextureFromAsset(skyTextureFader,        scene->skyTexture);
+    
+    // update models
+    
+    
+    /*if(params->bAutoCameraRotation.get()) {
         camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
     } else {
         camOrientation = params->camOrientation.get();
-    }
+    }*/
     
     cam.setOrientation(camOrientationFilter->updateDegree(camOrientation + params->camOrientation.get()));
     
-    if(params->bAutoEffectRotation.get()) {
+    /*if(params->bAutoEffectRotation.get()) {
         effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime() * 100);
     } else {
         effectOrientation = params->effectOrientationRef.get();
-    }
+    }*/
     
-    cam.setFarClip(params->camFarClip);
-    cam.setFov(params->camFov);
-    cam.setNearClip(params->camNearClip);
-    zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
+    //cam.setFarClip(params->camFarClip);
+    cam.setFov(params->camFov.get());
+    //cam.setNearClip(params->camNearClip);
+    //zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
     
-    camOffset = camOffsetFilter->update(camRefPos + params->camOffset.get() + ofVec3f(0,0,zTravel));
+    //camOffset = camOffsetFilter->update(camRefPos + params->camOffset.get() + ofVec3f(0,0,zTravel));
     
-    cam.setPosition(params->camOffset.get());
+    //cam.setPosition(params->camOffset.get());
+    
     landscapeTextureFader->update();
     effectTextureFader->update();
     skyTextureFader->update();
@@ -177,7 +215,9 @@ void Renderer::renderLandscapeVboMeshes(Model * m, float fade, bool prim = true)
 }
 
 void Renderer::renderEffectModel(Model * m, float fade) {
+    
     if(m == NULL || !m->hasMeshes()) return;
+    Parameters * params = scene->params;
     
     ofPushMatrix();
     
@@ -190,13 +230,12 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     
     ofScale(params->effectScale.get(), params->effectScale.get(), params->effectScale.get());
     
-    //ofDrawGrid();
+    ofDrawGrid();
     
     ofScale(fade,fade,fade);
     
     for(int i=0; i <m->getMeshCount(); i++) {
         m->drawVboMesh(i);
-        
     }
     
     ofPopMatrix();
@@ -206,6 +245,9 @@ void Renderer::renderEffectModel(Model * m, float fade) {
 
 void Renderer::render() {
     
+    if(scene == NULL) return;
+    
+    Parameters * params = scene->params;
     
     ofEnableAlphaBlending();
     //ofDisableArbTex();
@@ -220,6 +262,7 @@ void Renderer::render() {
         ofBackground(0,0,0);
         
         //ofEnableLighting();
+        //ofLight light;
         ofEnableDepthTest();
         
         skyBoxCam = cam;
@@ -235,7 +278,8 @@ void Renderer::render() {
         } skyBoxCam.end();
         
         cam.begin(); {
-            
+            ofDrawSphere(0, 0, 20);
+
             renderLandscape();
             
             ofPushMatrix(); {
@@ -249,8 +293,8 @@ void Renderer::render() {
                     ofTranslate(effectOffset);
                     
                     // where is the center?
-                    //ofSetColor(255,0,0);
-                    //ofDrawSphere(0, 0, 20);
+                    ofSetColor(255,0,0);
+                    ofDrawSphere(0, 0, 20);
                     
                     effectTextureFader->begin(); {
                         //for(int i=0; i < effectReplicator.get().x; i++) {
@@ -274,8 +318,6 @@ void Renderer::render() {
         
         
     } fbo.end();
-
-    
     
     
 }

@@ -19,7 +19,6 @@ void Project::load(string _filename) {
     
     addScene("debug");
     
-    
     activeScene = scenes.front();
     previewScene = scenes.front();
     
@@ -38,7 +37,7 @@ void Project::load(string _filename) {
         ofFile f(path);
         if(f.isFile()) {
             if(textures.size() > i){
-                textures[i]->load(f, &threadImgLoader);
+                textures[i].load(f, &threadImgLoader);
             }
         }
     }
@@ -48,7 +47,7 @@ void Project::load(string _filename) {
         string path = settings.getValue("model:path", "", i);
         ofFile f(path);
         if(f.isFile()) {
-            models[i]->load(f);
+            models[i].load(f);
         }
     }
     
@@ -64,8 +63,8 @@ void Project::update() {
         ofLogNotice()<<"Adding texture: "<<" "<<file.getFileName()<<endl;
         
         for(int i=0; i<textures.size(); i++) {
-            if(!textures[i]->armed) {
-                textures[i]->load(file, &threadImgLoader);
+            if(!textures[i].armed) {
+                textures[i].load(file, &threadImgLoader);
                 break;
             }
         }
@@ -78,14 +77,13 @@ void Project::update() {
         
         // TODO: load threaded from buffer then load to model when needed by GPU
         for(int i=0; i<models.size(); i++) {
-            if(!models[i]->armed) {
-                models[i]->load(file);
+            if(!models[i].armed) {
+                models[i].load(file);
                 break;
             }
         }
         modelQueue.pop_back();
     }
-    
 }
 
 
@@ -112,15 +110,13 @@ void Project::addScene(string _name) {
     scenes.push_back(scene);
 }
 
-void Project::selectScene(string _name) {
-    
+Scene * Project::getScene(string _name) {
     for(int i=0; i<scenes.size(); i++ ) {
         if(scenes[i]->name == _name) {
-            previewScene = scenes[i];
-            activeScene = scenes[i];
+            return scenes[i];
+            //activeScene = scenes[i];
         }
     }
-    
 }
 
 

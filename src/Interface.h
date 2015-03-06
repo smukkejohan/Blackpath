@@ -12,6 +12,8 @@
 #include "Project.h"
 #include "ofxMultiSelector.h"
 
+using namespace PARAM;
+
 class Interface {
     
 public:
@@ -40,8 +42,22 @@ public:
     
     Scene * selectedScene;
     
+    void selectScene(string name);
     MultiSelector * textureSelector;
     MultiSelector * modelSelector;
     
     void thumbEventListener(MultiSelectorEventData& args);
+    
+    
+    ofVec3f camOrientationXY;
+    float camOrientationZ;
+    ofxUI2DPad * camXYPad;
+    
+    float camFov;
+    ofxUISlider * fovSlider;
+    
+    ofxUIRangeSlider * clippingSlider;
+    
+    
+    
 };

@@ -27,19 +27,18 @@ class Renderer {
 public:
     
     
-    Renderer() {
+    Renderer(Project * _project) {
+        project = _project;
     }
+    
+    Project * project;
     
     void setup();
     void exit();
     
-
-    
     void setOutput();
-    
     void setupFilters();
-    
-    void update();
+    void update();             
     
     // Texturefaders
     TextureFader * landscapeTextureFader;
@@ -90,12 +89,13 @@ public:
     
     float zTravel; // Move z-travel to scene?
     
-    
     void enable()  { enabled = true;  }
     void disable() { enabled = false; }
     
-    Parameters * params;
-    
+    void setTextureFromAsset(TextureFader * textureFader, Asset asset);
+    void setModelFromAsset(ModelFader * modelFader, Asset asset);
+    //Parameters * params;
+    Scene * scene;
     
 private:
     bool enabled;

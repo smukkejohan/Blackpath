@@ -38,17 +38,14 @@ void Interface::setup() {
     ofAddListener(projectSettings->newGUIEvent, this, &Interface::guiEvent);
     projectSettings->addFPSSlider("FPS");
 
-    projectSettings->setVisible(false);
-    
-    sceneSettings = new ofxUICanvas();
-    ofAddListener(sceneSettings->newGUIEvent, this, &Interface::guiEvent);
+    projectSettings->setVisible(true);
     
     textureSelector = new MultiSelector(400, 500, 50, 50, "Texture");
     ofAddListener(textureSelector->selectorEvent, this, &Interface::thumbEventListener);
     
     for(int i =0; i < project->textures.size(); i++) {
         MultiSelectorItem * thumb = new MultiSelectorItem();
-        thumb->img =  project->textures[i]->getThumb();
+        thumb->img =  project->textures[i].getThumb();
         thumb->nid = i;
         textureSelector->items.push_back(thumb);
     }
@@ -66,26 +63,43 @@ void Interface::setup() {
     
     for(int i =0; i<  project->models.size(); i++) {
         MultiSelectorItem * thumb = new MultiSelectorItem();
-        thumb->img =  project->models[i]->getThumb();
+        thumb->img =  project->models[i].getThumb();
         thumb->nid = i;
         modelSelector->items.push_back(thumb);
     }
     
     
     
-    /*sceneSettings->addLabel("Camera Orientation");
-    sceneSettings->add2DPad("Cam XY Pad",
-                  ofVec3f(camOrientationParam.getMin().x,camOrientationParam.getMax().x,0),
-                  ofVec3f(camOrientationParam.getMin().y,camOrientationParam.getMax().y,0),
-                  &uiCamOrientationXY);
     
-    gui->addSlider("Cam orientation x", camOrientationParam.getMin().x, camOrientationParam.getMax().x, &uiCamOrientationXY.x);
-    gui->addSlider("Cam orientation y", camOrientationParam.getMin().y, camOrientationParam.getMax().y, &uiCamOrientationXY.y);
-    gui->addSlider("Cam orientation z", camOrientationParam.getMin().z, camOrientationParam.getMax().z, &uiCamOrientationZ);
+    sceneSettings = new ofxUICanvas();
+    ofAddListener(sceneSettings->newGUIEvent, this, &Interface::guiEvent);
     
-    gui->addButton("Reset Cam Rotation", &resetCamRot);
+    sceneSettings->setWidth(300);
     
-    ofxUITextInput * widthInput = new ofxUITextInput("Output width", ofToString(_width), 60);
+    sceneSettings->addLabel("Camera Orientation");
+    
+    camXYPad = new ofxUI2DPad("Cam XY Pad",
+                        ofVec3f(CAM_MIN_ORIENTATION.x, CAM_MAX_ORIENTATION.x, 0),ofVec3f(CAM_MIN_ORIENTATION.y,CAM_MAX_ORIENTATION.y, 0), &camOrientationXY, 280, 280);
+    
+    sceneSettings->addWidgetDown(camXYPad);
+    
+    
+    //sceneSettings->addSlider("Cam orientation x", CAM_MIN_ORIENTATION.x, CAM_MAX_ORIENTATION.x, &camOrientationXY.x);
+    
+    //sceneSettings->addSlider("Cam orientation y", CAM_MIN_ORIENTATION.y, CAM_MAX_ORIENTATION.y, &camOrientationXY.y);
+    
+    sceneSettings->addSlider("Cam orientation z", CAM_MIN_ORIENTATION.z, CAM_MAX_ORIENTATION.z, &camOrientationZ);
+    
+    sceneSettings->addButton("Reset Cam Rotation", false);
+    
+    
+    sceneSettings->addSlider("Cam FOV", CAM_MIN_FOV, CAM_MAX_FOV, &camFov);
+    
+    //sceneSettings->addSlider("Cam ", CAM_MIN_FOV, CAM_MAX_FOV, &camFov);
+    
+    sceneSettings->addRangeSlider("Clip", CAM_MIN_NEAR_CLIP, CAM_MAX_FAR_CLIP, CAM_MIN_NEAR_CLIP, CAM_MAX_FAR_CLIP);
+    
+    /*ofxUITextInput * widthInput = new ofxUITextInput("Output width", ofToString(_width), 60);
     widthInput->setOnlyNumericInput(true);
     widthInput->setAutoClear(false);
     
@@ -96,19 +110,28 @@ void Interface::setup() {
     gui->addLabel("Width:");
     gui->addWidgetDown(widthInput);
     gui->addLabel("Height:");
-    gui->addWidgetDown(heightInput);
+    gui->addWidgetDown(heightInput);*/
     
     //gui->addButton("Update output resolution", &bUpdateOutput);
     
-    gui->autoSizeToFitWidgets();
-    gui->setPosition(ofGetWidth()-gui->getRect()->width, ofGetHeight()-gui->getRect()->height);
-     
-     uiCamOrientationXY = ofVec3f(0,0,0);
-     uiCamOrientationZ = 0;
-     
-    */
+    sceneSettings->autoSizeToFitWidgets();
+    sceneSettings->setPosition(ofGetWidth()-sceneSettings->getRect()->width, ofGetHeight()-sceneSettings->getRect()->height);
     
-    sceneSettings->setVisible(false);
+    sceneSettings->setVisible(true);
+    
+}
+
+
+void Interface::selectScene(string _name) {
+    
+    selectedScene = project->getScene(_name);
+    project->previewScene = selectedScene;
+    
+    
+    camOrientationXY = selectedScene->params->camOrientation.get();
+    camOrientationZ = selectedScene->params->camOrientation.get().z;
+    camFov = selectedScene->params->camFov.get();
+    
     
 }
 
@@ -160,7 +183,7 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
         }
             
         pressedLabel->setValue(true);
-        project->selectScene(pressedLabel->getName());
+        selectScene(pressedLabel->getName());
     }
     
     
@@ -173,6 +196,26 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                 project->addScene();
             }
         }
+        
+    }
+    
+    
+    if(e.getCanvasParent() == sceneSettings && selectedScene != NULL && selectedScene->params != NULL)
+    {
+        Parameters * p = selectedScene->params;
+        
+        ///cout<<e.getName()<<endl;
+        if(e.getName() == "Cam XY Pad" || e.getName() == "Cam Orientation z" ) {
+            p->camOrientation.set(ofVec3f(camOrientationXY.x, camOrientationXY.y, camOrientationZ));
+        }
+        
+        if(e.getName() == "Cam FOV") {
+            p->camFov.set(camFov);
+        }
+        
+        /*if(e.getName() == "Clip") {
+            p->camNearClip.set(e.range)
+        }*/
         
     }
     
@@ -220,7 +263,6 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             
             _height = ofToInt(output);
             setupOutput();
-            
         }
     }
     
@@ -233,55 +275,34 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
 void Interface::thumbEventListener(MultiSelectorEventData& args) {
     cout<<"Received event "<<args.event<<args.title<<args.thumbNum<<endl;
     
-    if(args.event == "inside") {
-        // Mouse released inside a thumb in a selector, this means we have to schedule it
+    if(args.event == "inside" && selectedScene) {
         if(args.title == "Texture") {
             
-            ofTexture * tex;
-            if(args.item->type == "syphon") {
-                
-                if(project->syphonTextures[args.item->nid].client && project->syphonTextures[args.item->nid].client->isSetup() && project->syphonTextures[args.item->nid].armed && project->syphonTextures[args.item->nid].client->getTexture().isAllocated()) {
-                    
-                    tex = &project->syphonTextures[args.item->nid].client->getTexture();
-                }
-            } else if( args.item->type == "color") {
-                
-            } else {
-                tex = &project->textures[args.thumbNum]->getTexture();
+            if(ofGetKeyPressed('1')) {
+                    selectedScene->landscapeTexture = Asset(args.item->type, args.item->nid);
             }
-            
-            
-            if(tex && tex->isAllocated()) {
-                if(ofGetKeyPressed('1')) {
-                    //landscapeTextureFader.setWait(tex);
-                    // todo tie into gui - and affect current UI scene be it preview or live
-                }
-                if(ofGetKeyPressed('2')) {
-                    //secondaryTextureFader.setWait(tex);
-                }
-                if(ofGetKeyPressed('3')) {
-                    //effectTextureFader.setWait(tex);
-                }
-                if(ofGetKeyPressed('4')) {
-                    //skyTextureFader.setWait(tex);
-                }
+            if(ofGetKeyPressed('2')) {
+                    selectedScene->secondaryTexture = Asset(args.item->type, args.item->nid);
+            }
+            if(ofGetKeyPressed('3')) {
+                    selectedScene->effectTexture = Asset(args.item->type, args.item->nid);
+            }
+            if(ofGetKeyPressed('4')) {
+                    selectedScene->skyTexture = Asset(args.item->type, args.item->nid);
             }
             
         } else if(args.title == "Model") {
-            
             if(ofGetKeyPressed('1')) {
-                //landscapeFader.setWait(&models[args.thumbNum]);
                 //resetCamRot = true;
+                selectedScene->landscapeModel = Asset(args.item->type, args.item->nid);
             }
             
             if(ofGetKeyPressed('2')) {
-                //effectModelFader.setWait(&models[args.thumbNum]);
                 //resetEffectRot = true;
+                selectedScene->effectModel = Asset(args.item->type, args.item->nid);
             }
-            
         }
     }
-    
 }
 
 

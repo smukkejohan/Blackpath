@@ -1,6 +1,5 @@
 #include "ofApp.h"
 
-
 //--------------------------------------------------------------
 void ofApp::setup(){
     ofShowCursor();
@@ -17,6 +16,14 @@ void ofApp::setup(){
     ofShowCursor();
     ofSetLogLevel(OF_LOG_NOTICE);
     
+    //setup our directory
+    dir.setup();
+    //register for our directory's callbacks
+    ofAddListener(dir.events.serverAnnounced, this, &ofApp::serverAnnounced);
+    // not yet implemented
+    //ofAddListener(dir.events.serverUpdated, this, &testApp::serverUpdated);
+    ofAddListener(dir.events.serverRetired, this, &ofApp::serverRetired);
+    
     project = new Project();
     project->load("defaultProject.xml");
     ui = new Interface(project);
@@ -29,20 +36,8 @@ void ofApp::setup(){
     syphonOut.setName("Landscape");
     ui->setup();
     
-    //setup our directory
-    dir.setup();
-    //register for our directory's callbacks
-    ofAddListener(dir.events.serverAnnounced, this, &ofApp::serverAnnounced);
-    // not yet implemented
-    //ofAddListener(dir.events.serverUpdated, this, &testApp::serverUpdated);
-    ofAddListener(dir.events.serverRetired, this, &ofApp::serverRetired);
-    
-    
-    liveRenderer = new Renderer();
-    liveRenderer->params = project->getActiveScene()->params;
-    previewRenderer = new Renderer();
-    previewRenderer->params = project->getActiveScene()->params;
-    
+    liveRenderer = new Renderer(project);
+    previewRenderer = new Renderer(project);
     
     liveRenderer->setup();
     previewRenderer->setup();
@@ -53,24 +48,23 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    
     ui->update();
     
-    liveRenderer->render();
-    previewRenderer->render();
+    liveRenderer->scene =    project->activeScene;
+    previewRenderer->scene = project->previewScene;
+    
+    liveRenderer->update();
+    previewRenderer->update();
     
     project->update();
     
     for(int i =0; i< project->textures.size(); i++) {
-        project->textures[i]->update();
+        project->textures[i].update();
     }
-    
     for(int i =0; i< project->models.size(); i++) {
-        project->models[i]->update();
+        project->models[i].update();
     }
-    
 }
-
 
 
 //--------------------------------------------------------------
@@ -79,11 +73,15 @@ void ofApp::draw(){
     liveRenderer->render();
     previewRenderer->render();
     
+    previewRenderer->fbo.draw(200,200, previewRenderer->fbo.getWidth()/2, previewRenderer->fbo.getHeight()/2);
     ui->draw();
     
     // TODO: Render output monitors for live and preview
     ofSetColor(255, 255, 255);
-    syphonOut.publishTexture(&liveRenderer->fbo.getTexture());
+    syphonOut.publishTexture(&previewRenderer->fbo.getTexture());
+    
+    ofDrawBitmapString(previewRenderer->scene->name, 200, 200);
+    
 }
 
 //--------------------------------------------------------------
@@ -159,8 +157,7 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 void ofApp::exit() {
     
-    
-/*settings.clear();
+    /*settings.clear();
     
     for(int i=0; i<textures.size(); i++) {
         settings.addTag("texture");
@@ -176,8 +173,7 @@ void ofApp::exit() {
         settings.addValue("path", models[i].file.getAbsolutePath());
         settings.popTag();
     }
-    
-    
+ 
     settings.addValue("outwidth", _width);
     settings.addValue("outheight", _height);
     settings.save(ofToDataPath(projectPath));
