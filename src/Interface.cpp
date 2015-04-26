@@ -132,7 +132,6 @@ void Interface::selectScene(string _name) {
     camOrientationZ = selectedScene->params->camOrientation.get().z;
     camFov = selectedScene->params->camFov.get();
     
-    
 }
 
 void Interface::update() {

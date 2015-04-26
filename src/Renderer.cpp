@@ -67,10 +67,9 @@ void Renderer::renderSky() {
         cubeMap.beginDrawingInto2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i );
         
         ofClear(0,0,0);
-        
         skyTextureFader->draw(cubeMap.getWidth(), cubeMap.getHeight());
-        //ofLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
-        //ofLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
+        ofLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
+        ofLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
         
         cubeMap.endDrawingInto2D();
     }
@@ -272,6 +271,7 @@ void Renderer::render() {
             ofPushMatrix(); {
                 ofTranslate(cam.getPosition());
                 cubeMap.bind();
+                ofFill();
                 cubeMap.drawSkybox(65000);
                 cubeMap.unbind();
             } ofPopMatrix();

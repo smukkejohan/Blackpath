@@ -36,7 +36,7 @@ void ofApp::setup(){
     syphonOut.setName("Landscape");
     ui->setup();
     
-    liveRenderer = new Renderer(project);
+    liveRenderer    = new Renderer(project);
     previewRenderer = new Renderer(project);
     
     liveRenderer->setup();

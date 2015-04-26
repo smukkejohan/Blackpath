@@ -44,7 +44,6 @@ public:
     }
     
     void draw(float _width, float _height, float fade = 1) {
-        
         if(getCurrent() && getCurrent()->isAllocated()) {
             ofSetColor(255,255,255,fade*255);
             getCurrent()->draw(0, 0, _width, _height);
