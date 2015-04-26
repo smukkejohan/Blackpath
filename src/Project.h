@@ -86,9 +86,9 @@ public:
             if(s->client &&
                s->client->isSetup() &&
                s->armed &&
-               s->client->getTexture().isAllocated()) {
+               s->client->getTextureRef().isAllocated()) {
                 
-                ret = &s->client->getTexture();
+                ret = &s->client->getTextureRef();
             }
             
         } else /* asset type texture*/ {

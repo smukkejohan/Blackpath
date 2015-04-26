@@ -28,11 +28,24 @@ namespace PARAM { // Parmeter constants / defaults
     static const ofVec2f CAM_MIN_OFFSET = ofVec2f(-500,-500);
     static const ofVec2f CAM_MAX_OFFSET = ofVec2f(500,500);
     
+    static const ofVec3f CAM_MIN_ORIENTATION = ofVec3f(-120,-120,-120);
+    static const ofVec3f CAM_MAX_ORIENTATION = ofVec3f(120,120,120);
     
-    static const ofVec3f CAM_MIN_ORIENTATION = ofVec3f(120,120,120);
-    static const ofVec3f CAM_MAX_ORIENTATION = ofVec3f(-120,-120,-120);
+    static const ofVec3f CAM_MIN_SPEED_AUTO_ORIENTATION = ofVec3f(-1,-1,-1);
+    static const ofVec3f CAM_MAX_SPEED_AUTO_ORIENTATION = ofVec3f(1,1,1);
     
+    static const ofVec3f EFFECT_DEFAULT_OFFSET = ofVec3f(0,0,-400);
+    static const ofVec3f EFFECT_MIN_OFFSET = ofVec3f(-5000,-5000,-5000);
+    static const ofVec3f EFFECT_MAX_OFFSET = ofVec3f(5000,5000,100);
     
+    static const ofVec3f EFFECT_DEFAULT_SCALE = ofVec3f(1,1,1);
+    
+    // effect auto rotation
+    
+    // effect orientation
+    
+    static const ofVec3f EFFECT_MIN_ORIENTATION = ofVec3f(-120,-120,-120);
+    static const ofVec3f EFFECT_MAX_ORIENTATION = ofVec3f(120,120,120);
     
     
 };

@@ -107,7 +107,7 @@ public:
         if(!bChanged && _width == thumb.getWidth() && _height == thumb.getHeight()) return &thumb;
         
         thumbFbo.begin();
-        if(client && client->isSetup() && client->getTexture().isAllocated()) {
+        if(client && client->isSetup() && client->getTextureRef().isAllocated()) {
             //todo - this is not working
             //client->draw(0,0);
             ofBackground(0, 255, 0);

@@ -68,8 +68,10 @@ void Parameters::init() {
     camOrientation.set("Orientation Ref", ofVec3f(0,0,0), CAM_MIN_ORIENTATION, CAM_MAX_ORIENTATION);
     
     bAutoCameraRotation.set("Auto Camera Orientation", false);
-    autoCamSpeed.set("Auto orientation speed", ofVec3f(0,0,0), ofVec3f(-1,-1,-1), ofVec3f(1,1,1));
-    effectOffset.set("Offset", ofVec3f(0,0,-400), ofVec3f(-5000,-5000,-5000), ofVec3f(5000,5000,100));
+    autoCamSpeed.set("Auto orientation speed", ofVec3f(0,0,0), CAM_MIN_SPEED_AUTO_ORIENTATION, CAM_MAX_SPEED_AUTO_ORIENTATION);
+    
+    effectOffset.set("Offset", EFFECT_DEFAULT_OFFSET, EFFECT_MIN_OFFSET, EFFECT_MAX_OFFSET);
+    
     effectScale.set("Scale", 1, 0, 1);
     bAutoEffectRotation.set("Auto rotation", false);
     effectOrientationRef.set("Rotation ref", ofVec3f(0,0,0), ofVec3f(-120,-120,-120), ofVec3f(120,120,120));

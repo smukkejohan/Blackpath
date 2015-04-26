@@ -44,7 +44,6 @@ public:
     Project * project;
     Interface * ui;
     
-    
     ofxSyphonServer syphonOut;
     
     /*ofVec3f uiCamOrientationXY;
