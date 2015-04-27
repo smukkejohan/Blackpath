@@ -38,10 +38,28 @@ public:
     };
     
     string name;
-    ofxXmlSettings settings;
-    
     void remove();
-    void save();
+    void load(ofxXmlSettings& settings) {
+        
+        name = settings.getValue("name", "");
+        
+        // todo load asssets
+        
+        // todo load parameters
+        
+    }
+    
+    void save(ofxXmlSettings& settings) {
+        
+        settings.addValue("name", name);
+        
+        // todo save asssets
+        
+        
+        // todo save parameters
+        
+        
+    }
     
     void exit() {
         delete params;

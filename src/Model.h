@@ -71,6 +71,9 @@ public:
     
     void drawVboMesh(int i, int renderType=OF_MESH_FILL) {
         ofPushStyle(); {
+            ofFill();
+            ofSetColor(255);
+            
             ofPushMatrix(); {
                 ofMultMatrix(modelMatrix);
                 

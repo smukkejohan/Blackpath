@@ -195,9 +195,7 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                 project->addScene();
             }
         }
-        
     }
-    
     
     if(e.getCanvasParent() == sceneSettings && selectedScene != NULL && selectedScene->params != NULL)
     {

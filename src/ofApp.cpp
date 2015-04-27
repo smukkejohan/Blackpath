@@ -81,7 +81,6 @@ void ofApp::draw(){
     syphonOut.publishTexture(&previewRenderer->fbo.getTexture());
     
     ofDrawBitmapString(previewRenderer->scene->name, 200, 200);
-    
 }
 
 //--------------------------------------------------------------
@@ -157,28 +156,9 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 
 void ofApp::exit() {
     
-    /*settings.clear();
+    project->save();
     
-    for(int i=0; i<textures.size(); i++) {
-        settings.addTag("texture");
-        settings.pushTag("texture", i);
-        settings.addValue("path", textures[i].file.getAbsolutePath());
-        settings.popTag();
-    }
-    
-    int mi = 0;
-    for(int i=0; i<models.size(); i++) {
-        settings.addTag("model");
-        settings.pushTag("model", i);
-        settings.addValue("path", models[i].file.getAbsolutePath());
-        settings.popTag();
-    }
- 
-    settings.addValue("outwidth", _width);
-    settings.addValue("outheight", _height);
-    settings.save(ofToDataPath(projectPath));
-    
-    delete gui;*/
+    // free memory ?
 }
 
 //these are our directory's callbacks

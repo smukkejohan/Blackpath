@@ -8,19 +8,11 @@
 
 //char letters[] = "ABCDEFGHIJKLMNOPQRST";
 
-
 #include "Project.h"
 
 void Project::load(string _filename) {
     projectPath = ofToDataPath(_filename);
     settings.load(projectPath);
-    
-    /// FOR DEBUGGING - load this from project xml
-    
-    addScene("debug");
-    
-    activeScene = scenes.front();
-    previewScene = scenes.front();
     
     textures.clear();
     textures.resize(MAX_TEXTURES);
@@ -50,6 +42,30 @@ void Project::load(string _filename) {
             models[i].load(f);
         }
     }
+    
+    
+    int sceneTags = settings.getNumTags("scene");
+    for(int i=0; i<sceneTags; i++) {
+        
+        Scene * scene = new Scene();
+        settings.pushTag("scene", i);
+        //scene->name = settings.getValue("scene:name", "", i);;
+        scene->load(settings);
+        
+        scenes.push_back(scene);
+        settings.popTag();
+       
+    }
+    
+    
+    // if scenes
+    if(scenes.size() < 1) {
+        addScene();
+    }
+    
+    // todo get aciive and preview scene from xml
+    activeScene = scenes.front();
+    previewScene = scenes.front();
     
     
 }
@@ -86,8 +102,40 @@ void Project::update() {
     }
 }
 
-
 void Project::save() {
+    
+    
+    settings.clear();
+    
+    for(int i=0; i<textures.size(); i++) {
+        settings.addTag("texture");
+        settings.pushTag("texture", i);
+        settings.addValue("path", ofToDataPath(textures[i].file.getAbsolutePath()));
+        settings.popTag();
+    }
+    
+    for(int i=0; i<models.size(); i++) {
+        settings.addTag("model");
+        settings.pushTag("model", i);
+        
+        settings.addValue("path", ofToDataPath(models[i].file.getAbsolutePath()));
+        settings.popTag();
+    }
+
+    //settings.addValue("outwidth", _width);
+    //settings.addValue("outheight", _height);
+    
+    // todo active preview
+    // todo active output
+    
+    for(int i=0; i<scenes.size(); i++) {
+        settings.addTag("scene");
+        settings.pushTag("scene", i);
+        scenes[i]->save(settings);
+        settings.popTag();
+    }
+    
+    
     settings.save(projectPath);
 }
 
@@ -119,8 +167,9 @@ Scene * Project::getScene(string _name) {
     }
 }
 
-
 void Project::cloneScene(Scene _cloneFromScene) {
     //Scene scene = _cloneFromScene;
     scenes.push_back(&_cloneFromScene);
 }
+
+

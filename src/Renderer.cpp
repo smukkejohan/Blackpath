@@ -33,7 +33,6 @@ void Renderer::setup() {
     
     cubeMap.initEmptyTextures( 512 );
     
-    
     camRefPos = cam.getPosition();
     landscapeTextureFader->setup();
     effectTextureFader->setup();
@@ -62,20 +61,30 @@ void Renderer::setOutput() {
 }
 
 void Renderer::renderSky() {
+    
+    ofPushStyle();
+    ofFill();
+    ofSetColor(255);
+    
     for( int i = 0; i < 6; i++ )
     {
         cubeMap.beginDrawingInto2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i );
         
         ofClear(0,0,0);
         skyTextureFader->draw(cubeMap.getWidth(), cubeMap.getHeight());
-        ofLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
-        ofLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
+        ofDrawLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
+        ofDrawLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
         
         cubeMap.endDrawingInto2D();
     }
+    ofPopStyle();
 }
 
 void Renderer::renderLandscape() {
+    
+    ofPushStyle();
+    ofFill();
+    ofSetColor(255);
     
     ofPushMatrix(); {
         ofTranslate(modelOffset);
@@ -100,6 +109,7 @@ void Renderer::renderLandscape() {
             } ofPopMatrix();
         } ofPopMatrix();
     } ofPopMatrix();
+    ofPopStyle();
     
 
 }
@@ -108,7 +118,7 @@ void Renderer::setTextureFromAsset(TextureFader * textureFader, Asset _asset) {
     //cout<<_asset.nid<<"  "<<textureFader->asset.nid<<endl;
     
     if(_asset.isSet) {
-        if(textureFader->asset.nid == _asset.nid && textureFader->asset.type == _asset.type) {
+        if(textureFader->asset.isSet && textureFader->asset.nid == _asset.nid && textureFader->asset.type == _asset.type) {
             // no change
         } else {
             cout<<"new texture"<<endl;
@@ -121,12 +131,14 @@ void Renderer::setTextureFromAsset(TextureFader * textureFader, Asset _asset) {
 
 void Renderer::setModelFromAsset(ModelFader * modelFader, Asset _asset) {
     
-    if(modelFader->asset.nid == _asset.nid && modelFader->asset.type == _asset.type) {
+    if(_asset.isSet) {
+    if(modelFader->asset.isSet && modelFader->asset.nid == _asset.nid && modelFader->asset.type == _asset.type) {
         
     } else {
         cout<<"new model"<<endl;
         modelFader->setWait(project->getModelAsset(_asset));
         modelFader->asset = _asset;
+    }
     }
     
 }
@@ -142,7 +154,8 @@ void Renderer::update() {
     setTextureFromAsset(skyTextureFader,        scene->skyTexture);
     
     // update models
-    
+    setModelFromAsset(landscapeFader,  scene->landscapeModel);
+    setModelFromAsset(effectModelFader,  scene->effectModel);
     
     /*if(params->bAutoCameraRotation.get()) {
         camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
@@ -218,6 +231,9 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     if(m == NULL || !m->hasMeshes()) return;
     Parameters * params = scene->params;
     
+    ofPushStyle();
+    ofFill();
+    
     ofPushMatrix();
     
     ofTranslate( -m->getSceneCenter()   );
@@ -238,7 +254,7 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     }
     
     ofPopMatrix();
-    
+    ofPopStyle();
 }
 
 
