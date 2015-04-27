@@ -16,6 +16,12 @@
 #include "defines.h"
 
 
+// Asset is an intermediate object containing metadata
+// to link scene assets to the correct project data containers.
+// A unique asset is defined by an id (nid) and a type.
+// I have done it this way to decaouple things as much as possible and to avoid problems with memory addresses.
+// At this time the nid is also the index in vectors for the given type. TODO: Don't depend on that.
+
 struct Asset {
     
     Asset(){};
@@ -25,9 +31,25 @@ struct Asset {
         isSet = true;
     };
     
+    Asset(string _name, ofxXmlSettings& s) {
+        s.pushTag(_name);
+        type = s.getValue("type", "");
+        nid = s.getValue("nid", 0);
+        s.popTag();
+    };
+    
     string type="";
     int nid=0;
     bool isSet = false;
+    
+    void saveAsset(string title, ofxXmlSettings& s) {
+        s.addTag(title);
+        s.pushTag(title);
+        s.addValue("type", type);
+        s.addValue("nid", nid);
+        s.popTag();
+    }
+    
 };
 
 class Scene {
@@ -39,20 +61,34 @@ public:
     
     string name;
     void remove();
-    void load(ofxXmlSettings& settings) {
+    
+    
+    void load(ofxXmlSettings& s) {
         
-        name = settings.getValue("name", "");
-        
+        name = s.getValue("name", "");
+        // settings.getValue
         // todo load asssets
-        
         // todo load parameters
+        landscapeTexture = Asset("landscapeTexture", s);
+        secondaryTexture = Asset("secondaryTexture", s);
+        effectTexture = Asset("effectTexture", s);
+        skyTexture = Asset("skyTexture", s);
+        landscapeModel = Asset("landscapeModel", s);
+        effectModel = Asset("effectModel", s);
         
     }
     
-    void save(ofxXmlSettings& settings) {
+    void save(ofxXmlSettings& s) {
         
-        settings.addValue("name", name);
+        s.addValue("name", name);
         
+        landscapeTexture.saveAsset("landscapeTexture", s);
+        secondaryTexture.saveAsset("secondaryTexture", s);
+        effectTexture.saveAsset("effectTexture", s);
+        skyTexture.saveAsset("skyTexture", s);
+        landscapeModel.saveAsset("landscapeModel", s);
+        effectModel.saveAsset("effectModel", s);
+
         // todo save asssets
         
         

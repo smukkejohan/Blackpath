@@ -43,7 +43,6 @@ void Project::load(string _filename) {
         }
     }
     
-    
     int sceneTags = settings.getNumTags("scene");
     for(int i=0; i<sceneTags; i++) {
         
@@ -54,7 +53,6 @@ void Project::load(string _filename) {
         
         scenes.push_back(scene);
         settings.popTag();
-       
     }
     
     
@@ -103,7 +101,6 @@ void Project::update() {
 }
 
 void Project::save() {
-    
     
     settings.clear();
     
