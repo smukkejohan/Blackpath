@@ -10,6 +10,14 @@
 
 #include "Project.h"
 
+void Project::setup() {
+    
+    defaultTexture.allocate(20, 20, OF_IMAGE_COLOR);
+    defaultTexture.setColor(ofColor::grey);
+    defaultTexture.update();
+}
+
+
 void Project::load(string _filename) {
     projectPath = ofToDataPath(_filename);
     settings.load(projectPath);
@@ -43,7 +51,7 @@ void Project::load(string _filename) {
         }
     }
     
-    int sceneTags = settings.getNumTags("scene");
+    int sceneTags = settings.getNumTags("scene")   ;
     for(int i=0; i<sceneTags; i++) {
         
         Scene * scene = new Scene();
@@ -64,8 +72,7 @@ void Project::load(string _filename) {
     // todo get aciive and preview scene from xml
     activeScene = scenes.front();
     previewScene = scenes.front();
-    
-    
+    //selectedScene = scenes.front();
 }
 
 
@@ -131,7 +138,6 @@ void Project::save() {
         scenes[i]->save(settings);
         settings.popTag();
     }
-    
     
     settings.save(projectPath);
 }

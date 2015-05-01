@@ -28,7 +28,7 @@ struct Asset {
     Asset(string _type, int _nid) {
         type = _type;
         nid = _nid;
-        isSet = true;
+        //isSet = true;
     };
     
     Asset(string _name, ofxXmlSettings& s) {
@@ -36,11 +36,12 @@ struct Asset {
         type = s.getValue("type", "");
         nid = s.getValue("nid", 0);
         s.popTag();
+        //isSet = true;
     };
     
-    string type="";
-    int nid=0;
-    bool isSet = false;
+    string type="none";
+    int nid=-1;
+    //bool isSet = false;
     
     void saveAsset(string title, ofxXmlSettings& s) {
         s.addTag(title);
@@ -57,6 +58,8 @@ public:
     
     Scene() {
         params = new Parameters();
+        
+        params->init();
     };
     
     string name;
@@ -76,23 +79,59 @@ public:
         landscapeModel = Asset("landscapeModel", s);
         effectModel = Asset("effectModel", s);
         
+        //params->allParameters.fromString(s.getValue("parameters",""));
+        
+        s.pushTag("parameters");
+        for(int i=0; i<params->allParameters.size(); i++ ) {
+            
+            params->allParameters[i].fromString(s.getValue(params->allParameters[i].getEscapedName(),""));
+            
+            //cout<<params->allParameters[i].toString()<<endl;
+            
+        }
+        s.popTag();
+        
+        
     }
     
     void save(ofxXmlSettings& s) {
         
         s.addValue("name", name);
         
+        
+        // save active assets
         landscapeTexture.saveAsset("landscapeTexture", s);
         secondaryTexture.saveAsset("secondaryTexture", s);
         effectTexture.saveAsset("effectTexture", s);
         skyTexture.saveAsset("skyTexture", s);
         landscapeModel.saveAsset("landscapeModel", s);
         effectModel.saveAsset("effectModel", s);
+        
+        // save parameters
+        
+        
+        
+        //
+        
+        
+            s.addTag("parameters");
+        s.pushTag("parameters");
+        for(int i=0; i<params->allParameters.size(); i++ ) {
+            s.addValue(params->allParameters[i].getEscapedName(),params->allParameters[i].toString());
+            
+            //cout<<params->allParameters[i].toString()<<endl;
 
-        // todo save asssets
+            
+            
+        }
+        s.popTag();
         
         
-        // todo save parameters
+        //s.addValue("parameters",params->allParameters.toString());
+        
+        //cout<<params->allParameters.toString()<<endl;
+        
+        //params->allParameters.toString()
         
         
     }
@@ -122,6 +161,7 @@ public:
     Project() {
     };
     
+    void setup();
     void load(string filename);
     void save();
     void save(string filename);
@@ -130,8 +170,8 @@ public:
     void addScene(string name);
     void addScene();
     
+    //todo use ref instead of pointer maybe
     ofTexture * getTextureAsset(Asset _asset) {
-        ofTexture * ret;
         
         if(_asset.type == "syphon") {
             
@@ -142,14 +182,18 @@ public:
                s->armed &&
                s->client->getTextureRef().isAllocated()) {
                 
-                ret = &s->client->getTextureRef();
+                return &s->client->getTextureRef();
             }
             
-        } else /* asset type texture*/ {
-                ret = &textures[_asset.nid].getTexture();
-        } // todo color / gen patterns
+        } else if( _asset.type == "texture" ) {
+            
+            // todo loop through and match nid instead of depend on location
+            
+                return &textures[_asset.nid].getTexture();
+        } else if(_asset.type == "none") {
+            return &defaultTexture.getTexture();
+        }
         
-        return ret;
     }
     
     Model * getModelAsset(Asset _asset) {
@@ -210,6 +254,8 @@ public:
     vector<Texture> textures;
     vector<Model>   models;
     vector<SyphonTexture> syphonTextures;
+    ofImage defaultTexture;
+
     
     
 private:

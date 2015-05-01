@@ -44,7 +44,8 @@ public:
     Project * project;
     Interface * ui;
     
-    ofxSyphonServer syphonOut;
+    //ofxSyphonServer mainOut;
+    //ofxSyphonServer previewOut;
     
     /*ofVec3f uiCamOrientationXY;
     float   uiCamOrientationZ;

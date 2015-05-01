@@ -13,10 +13,16 @@ void Renderer::setupFilters() {
     effectOrientationFilter = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
     effectOffsetFilter      = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
     camOffsetFilter         = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
+    
+    // todo filter FOV
+    
+    // todo filter scale
+    
 }
 
 void Renderer::setup() {
     
+    // Do I need new here? Do I need pointers at all?
     landscapeTextureFader = new TextureFader();
     secondaryTextureFader = new TextureFader();
     effectTextureFader = new TextureFader();
@@ -43,19 +49,32 @@ void Renderer::setup() {
     setOutput();
 }
 
-
+// todo pass nt width, int height, samples, preview / live mode
 void Renderer::setOutput() {
     
     // todo make output settings configurable
     
-    ofFbo::Settings fboSettings;
-    fboSettings.height = 1080;
-    fboSettings.width  = 1920;
+        ofFbo::Settings fboSettings;
     fboSettings.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
-    fboSettings.numSamples = 8;
     fboSettings.useDepth = true;
     fboSettings.internalformat = GL_RGBA;
-    //fboSettings.depthStencilAsTexture = true;
+    
+    
+    if(name == "live") {
+    
+
+    fboSettings.height = 1080;
+    fboSettings.width  = 1920;
+    fboSettings.numSamples = 8;
+    
+    } else {
+        
+        fboSettings.height = 1080;///4;
+        fboSettings.width  = 1920;///4; TODO scale values so a lower resolution render will have same composition
+        fboSettings.numSamples = 1;
+        
+        
+    }
     
     fbo.allocate(fboSettings);
 }
@@ -72,8 +91,6 @@ void Renderer::renderSky() {
         
         ofClear(0,0,0);
         skyTextureFader->draw(cubeMap.getWidth(), cubeMap.getHeight());
-        ofDrawLine(0,0, cubeMap.getWidth(), cubeMap.getHeight() );
-        ofDrawLine(cubeMap.getWidth(), 0, 0, cubeMap.getHeight() );
         
         cubeMap.endDrawingInto2D();
     }
@@ -105,7 +122,6 @@ void Renderer::renderLandscape() {
                     
                 } secondaryTextureFader->end();
                 
-                
             } ofPopMatrix();
         } ofPopMatrix();
     } ofPopMatrix();
@@ -117,28 +133,24 @@ void Renderer::renderLandscape() {
 void Renderer::setTextureFromAsset(TextureFader * textureFader, Asset _asset) {
     //cout<<_asset.nid<<"  "<<textureFader->asset.nid<<endl;
     
-    if(_asset.isSet) {
-        if(textureFader->asset.isSet && textureFader->asset.nid == _asset.nid && textureFader->asset.type == _asset.type) {
+        if(textureFader->hasTexture() && textureFader->asset.nid == _asset.nid && textureFader->asset.type == _asset.type) {
             // no change
         } else {
-            cout<<"new texture"<<endl;
+            cout<<name<<":new texture"<<endl;
             textureFader->setWait(project->getTextureAsset(_asset));
             textureFader->asset = _asset;
         }
-    }
 
 }
 
 void Renderer::setModelFromAsset(ModelFader * modelFader, Asset _asset) {
     
-    if(_asset.isSet) {
-    if(modelFader->asset.isSet && modelFader->asset.nid == _asset.nid && modelFader->asset.type == _asset.type) {
+    if(modelFader->hasModel() && modelFader->asset.nid == _asset.nid && modelFader->asset.type == _asset.type) {
         
     } else {
-        cout<<"new model"<<endl;
+        cout<<name<<": new model"<<endl;
         modelFader->setWait(project->getModelAsset(_asset));
         modelFader->asset = _asset;
-    }
     }
     
 }
@@ -157,28 +169,28 @@ void Renderer::update() {
     setModelFromAsset(landscapeFader,  scene->landscapeModel);
     setModelFromAsset(effectModelFader,  scene->effectModel);
     
-    /*if(params->bAutoCameraRotation.get()) {
+    if(params->bAutoCameraRotation.get()) {
         camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
     } else {
         camOrientation = params->camOrientation.get();
-    }*/
+    }
     
     cam.setOrientation(camOrientationFilter->updateDegree(camOrientation + params->camOrientation.get()));
     
-    /*if(params->bAutoEffectRotation.get()) {
-        effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime() * 100);
+    if(params->bAutoEffectRotation.get()) {
+        effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime());
     } else {
         effectOrientation = params->effectOrientationRef.get();
-    }*/
+    }
     
-    //cam.setFarClip(params->camFarClip);
+    cam.setFarClip(params->camFarClip);
     cam.setFov(params->camFov.get());
-    //cam.setNearClip(params->camNearClip);
-    //zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
+    cam.setNearClip(params->camNearClip);
+    zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
     
-    //camOffset = camOffsetFilter->update(camRefPos + params->camOffset.get() + ofVec3f(0,0,zTravel));
+    camOffset = camOffsetFilter->update(camRefPos + params->camOffset.get() + ofVec3f(0,0,zTravel));
     
-    //cam.setPosition(params->camOffset.get());
+    cam.setPosition(camOffset);
     
     landscapeTextureFader->update();
     effectTextureFader->update();
@@ -187,8 +199,6 @@ void Renderer::update() {
     effectModelFader->update();
     landscapeFader->update();
 }
-
-
 
 void Renderer::renderLandscapeVboMeshes(Model * m, float fade, bool prim = true) {
     if(m == NULL || !m->hasMeshes()) return;
@@ -215,6 +225,7 @@ void Renderer::renderLandscapeVboMeshes(Model * m, float fade, bool prim = true)
                     //m->vboMeshes[0].draw();
                     
                 } else {
+                    
                     for(int i=1; i <m->getMeshCount(); i++) {
                         m->drawVboMesh(i);
                         //m->vboMeshes[i].draw();
@@ -238,14 +249,12 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     
     ofTranslate( -m->getSceneCenter()   );
     
-    ofVec3f filteredRot = effectOrientationFilter->updateDegree(effectOrientation + params->effectOrientationRef.get());
+    ofVec3f filteredRot = effectOrientationFilter->updateDegree((effectOrientation*120) + params->effectOrientationRef.get()*120);
     ofRotateX(filteredRot.x);
     ofRotateY(filteredRot.y);
     ofRotateZ(filteredRot.z);
     
     ofScale(params->effectScale.get(), params->effectScale.get(), params->effectScale.get());
-    
-    ofDrawGrid();
     
     ofScale(fade,fade,fade);
     
@@ -259,8 +268,14 @@ void Renderer::renderEffectModel(Model * m, float fade) {
 
 
 void Renderer::render() {
-    
     if(scene == NULL) return;
+    
+    ofPushMatrix();
+    ofPushStyle();
+    
+    /*if(name == "preview") {
+        ofScale(0.25,0.25,0.25);
+    }*/
     
     Parameters * params = scene->params;
     
@@ -308,10 +323,6 @@ void Renderer::render() {
                     effectOffset = effectOffsetFilter->update(params->effectOffset.get());
                     ofTranslate(effectOffset);
                     
-                    // where is the center?
-                    ofSetColor(255,0,0);
-                    ofDrawSphere(0, 0, 20);
-                    
                     effectTextureFader->begin(); {
                         //for(int i=0; i < effectReplicator.get().x; i++) {
                         //    ofTranslate(100, 0);
@@ -328,12 +339,14 @@ void Renderer::render() {
         
         ofDisableDepthTest();
         
-        /*if(directSyphon > 0) {
+        /*if(directSyphon > 0) { //TODO direct syphon
             landscapeTextureFader.draw(fbo.getWidth(), fbo.getHeight(), directSyphon);
         }*/
         
         
     } fbo.end();
     
+    ofPopStyle();
+    ofPopMatrix();
     
 }

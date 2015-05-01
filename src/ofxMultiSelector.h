@@ -40,12 +40,14 @@ public:
     void draw() {
         ofPushMatrix();
         ofPushStyle();
+        
         if(hover || selected) {
             ofSetColor(255,255,255);
         } else {
             ofSetColor(100,100,100);
         }
         
+        ofNoFill();
         ofDrawRectangle(rect);
         
         if(type == "syphon") {
@@ -55,6 +57,8 @@ public:
             ofPopMatrix();
         } else {
             if(img->isAllocated()){
+                
+                ofFill();
                 img->draw(rect);
             }
         }
@@ -121,6 +125,11 @@ public:
     };
     
     void draw(int _x=0, int _y=0) {
+        ofPushStyle();
+        ofPushMatrix();
+        
+        ofNoFill();
+        
         rect.x = _x;
         rect.y = _y;
         
@@ -143,7 +152,7 @@ public:
             int xin = masterPadding + rect.x + padding + (i - ((row)*itemsPerRow))*(itemWidth+padding);
             int yin = rect.y + padding + (row*(itemHeight+padding));
             
-            ofNoFill();
+            
             items[i]->rect.set(xin, yin, itemWidth, itemHeight);
             items[i]->draw();
         }
@@ -155,6 +164,10 @@ public:
             ofSetColor(100,100,100);
             ofDrawRectangle(innerRect);
         }
+        
+        ofPopMatrix();
+        ofPopStyle();
+        
     };
     
     float getHeight() {

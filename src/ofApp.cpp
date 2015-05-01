@@ -25,6 +25,7 @@ void ofApp::setup(){
     ofAddListener(dir.events.serverRetired, this, &ofApp::serverRetired);
     
     project = new Project();
+    project->setup();
     project->load("defaultProject.xml");
     ui = new Interface(project);
     
@@ -33,14 +34,13 @@ void ofApp::setup(){
     _width  = project->getSettings().getValue("outwidth", 1920);
     _height = project->getSettings().getValue("outheight", 1080);
     
-    syphonOut.setName("Landscape");
     ui->setup();
     
-    liveRenderer    = new Renderer(project);
-    previewRenderer = new Renderer(project);
+    liveRenderer    = new Renderer("live", project);
+    previewRenderer = new Renderer("preview", project);
     
     liveRenderer->setup();
-    previewRenderer->setup();
+    previewRenderer->setup();// TODO pass in fbo settings for preview and live
     
 
 }
@@ -50,7 +50,7 @@ void ofApp::update(){
     
     ui->update();
     
-    liveRenderer->scene =    project->activeScene;
+    liveRenderer->scene =    project->previewScene; // todo active scene
     previewRenderer->scene = project->previewScene;
     
     liveRenderer->update();
@@ -70,17 +70,34 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     
+    // todo: if the live is the same as output we should reuse the fbo for preview instead of rendering again
+    
+    
+    ofFill();
+    ofBackground(60, 60, 60);
+    ofSetColor(255, 255, 255);
+    
     liveRenderer->render();
     previewRenderer->render();
     
-    previewRenderer->fbo.draw(200,200, previewRenderer->fbo.getWidth()/2, previewRenderer->fbo.getHeight()/2);
-    ui->draw();
+    
+    previewRenderer->fbo.draw(300,100, previewRenderer->fbo.getWidth()/4, previewRenderer->fbo.getHeight()/4);
+   
+    liveRenderer->fbo.draw(300,120+ previewRenderer->fbo.getHeight()/4, liveRenderer->fbo.getWidth()/4, liveRenderer->fbo.getHeight()/4);
     
     // TODO: Render output monitors for live and preview
     ofSetColor(255, 255, 255);
-    syphonOut.publishTexture(&previewRenderer->fbo.getTexture());
     
-    ofDrawBitmapString(previewRenderer->scene->name, 200, 200);
+    ofDrawBitmapString(previewRenderer->scene->name, 300, 100);
+    
+    ofDrawBitmapString(liveRenderer->scene->name, 300, 120+previewRenderer->fbo.getHeight()/4);
+    
+    
+    previewRenderer->publishSyphon();
+    liveRenderer->publishSyphon();
+
+
+    ui->draw();
 }
 
 //--------------------------------------------------------------

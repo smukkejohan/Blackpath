@@ -8,7 +8,7 @@
 
 #pragma once
 #include "ofMain.h"
-
+#include "ofxGui.h"
 
 namespace PARAM { // Parmeter constants / defaults
     
@@ -74,7 +74,6 @@ public:
     // Auto camera movement parameters
     ofParameter<bool>    bAutoCameraRotation;
     ofParameter<ofVec3f> autoCamSpeed;
-    
 
     // Effect model parameters
     ofParameter<ofVec3f> effectOffset;
@@ -84,7 +83,8 @@ public:
     ofParameter<ofVec3f> effectOrientationRef;
     ofParameter<ofVec3f> autoEffectRotSpeed;
     
-    
+    ofParameterGroup allParameters;
+    //ofxPanel allParamPanel;
     //Put these in UI its an action
     //ofParameter<bool>    resetAll;
     //ofParameter<bool>    resetEffectRot;

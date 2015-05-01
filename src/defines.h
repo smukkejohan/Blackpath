@@ -14,6 +14,7 @@
 #define MAX_COLOR_TEXTURES 3
 #define MAX_MODELS 36
 #define MAX_TABS 24
+#define DEBUG true
 
 static const string _AIE[] = {"png","jpg","jpeg"};
 static const vector<string> ACCEPTED_IMAGE_EXTENSIONS(_AIE, _AIE + (sizeof _AIE / sizeof _AIE[0]));

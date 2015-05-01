@@ -75,6 +75,15 @@ public:
             tween.setParameters(1,easinglinear,ofxTween::easeIn,0.0,1.0,transitionDuraion,0);
         }
     };
+    
+    bool hasTexture() {
+        
+        for(int i=0; i<3; i++) {
+            if (textures[i] && textures[i]->isAllocated()) return true;
+        }
+        return false;
+    };
+    
     ofTexture * getCurrent() {
         return textures[0];
     };

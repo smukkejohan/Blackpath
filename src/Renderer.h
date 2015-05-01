@@ -26,15 +26,21 @@
 class Renderer {
 public:
     
-    
-    Renderer(Project * _project) {
+    Renderer(string _name, Project * _project) {
+        name = _name;
         project = _project;
+        
+        syphonOut.setName(name);
     }
     
     Project * project;
     
     void setup();
     void exit();
+    
+    void publishSyphon() {
+        syphonOut.publishTexture(&fbo.getTexture());
+    }
     
     void setOutput();
     void setupFilters();
@@ -54,7 +60,9 @@ public:
     ofCamera cam;
     ofCamera skyBoxCam;
     ofxCubeMap cubeMap;
-
+    
+    
+    
     // disable enable
     // low priority for preview - preset
        // lower framerate
@@ -96,6 +104,9 @@ public:
     void setModelFromAsset(ModelFader * modelFader, Asset asset);
     //Parameters * params;
     Scene * scene;
+    
+    string name;
+    ofxSyphonServer syphonOut;
     
 private:
     bool enabled;

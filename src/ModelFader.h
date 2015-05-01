@@ -50,6 +50,13 @@ public:
         }
     };
     
+    bool hasModel() {
+        for(int i=0; i<3; i++) {
+            if (models[i] && models[i]->hasMeshes()) return true;
+        }
+        return false;
+    };
+    
     void setCurrent(Model * _mod) {
         models[0] = _mod;
     }
