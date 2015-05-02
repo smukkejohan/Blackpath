@@ -10,12 +10,17 @@
 
 #include <algorithm>    // std::min
 
+#define OFX_UI_LABEL_DRAW_BACK false
+#define OFX_UI_DRAW_PADDING false
+#define OFX_UI_DRAW_PADDING_OUTLINE false
 
 void Interface::setup() {
+    
     selectedScene = project->previewScene;
     
     projectTopMenu = new ofxUICanvas();
     ofAddListener(projectTopMenu->newGUIEvent, this, &Interface::guiEvent);
+    projectTopMenu->setDrawBack(false);
     
     newSceneBtn = new ofxUILabelButton("+", false);
     newSceneBtn->setName("ADD_SCENE");
@@ -32,33 +37,28 @@ void Interface::setup() {
     projectTopMenu->addWidgetRight(saveProjectBtn);
     
     sceneSelect = new ofxUICanvas();
+    sceneSelect->setDrawBack(false);
     sceneSelect->setName("Scene Select");
     ofAddListener(sceneSelect->newGUIEvent, this, &Interface::guiEvent);
     
     sceneSelect->setHeight(28);
     
     projectSettings = new ofxUICanvas();
+    projectSettings->setDrawBack(false);
     ofAddListener(projectSettings->newGUIEvent, this, &Interface::guiEvent);
     projectSettings->addFPSSlider("FPS");
     //projectSettings
     
     textureSelect = new ofxUIScrollableCanvas();
+    textureSelect->setDrawBack(false);
     ofAddListener(textureSelect->newGUIEvent, this, &Interface::guiEvent);
 
-    
-    
     modelSelect = new ofxUIScrollableCanvas();
+    modelSelect->setDrawBack(false);
     ofAddListener(modelSelect->newGUIEvent, this, &Interface::guiEvent);
-    
-    /*for(int i =0; i <  project->syphonTextures.size(); i++) {
-        MultiSelectorItem * thumb = new MultiSelectorItem();
-        thumb->type = "syphon";
-        //thumb->syphonTexture = &syphonTextures[i];
-        thumb->nid = i;
-        textureSelector->items.push_back(thumb);
-    }*/
 
     sceneSettings = new ofxUICanvas();
+    sceneSettings->setDrawBack(false);
     ofAddListener(sceneSettings->newGUIEvent, this, &Interface::guiEvent);
     
     sceneSettings->setWidth(300);
@@ -103,11 +103,9 @@ void Interface::setup() {
     sceneSettings->addWidgetSouthOf(getLabel("Z"), "orientationz");
     sceneSettings->addWidgetSouthOf(getLabel("Position"), "offset");
     
-    
     camAutoOrientationToggle = new ofxUIToggle("Auto camera orientation", &bAutoCamOrientation, 18, 18);
     
     sceneSettings->addWidgetDown(camAutoOrientationToggle);
-    
     
     autoCamRotXSlider = new ofxUIRotarySlider(86, -1, 1, &camRotSpeed.x, "rot x");
     //autoCamRotXSlider->setLabelVisible(false);
@@ -120,17 +118,16 @@ void Interface::setup() {
     sceneSettings->addWidgetRight(autoCamRotYSlider);
     sceneSettings->addWidgetRight(autoCamRotZSlider);
 
-    
     fovSlider = new ofxUISlider_<float>("FOV", CAM_MIN_FOV, CAM_MAX_FOV, &camFov, 280, 18);
     sceneSettings->addWidgetSouthOf(fovSlider, "Position");
     
-    
-    clippingPlaneSlider = new ofxUIRangeSlider("Clipping plane", CAM_MIN_NEAR_CLIP, CAM_MAX_FAR_CLIP, CAM_MIN_NEAR_CLIP, CAM_MAX_FAR_CLIP, 280, 18);
+    clippingPlaneSlider = new ofxUIRangeSlider("Clipping plane", CAM_MIN_NEAR_CLIP, CAM_MAX_FAR_CLIP, CAM_MIN_NEAR_CLIP, CAM_MAX_FAR_CLIP/2, 280, 18);
 
     sceneSettings->addWidgetSouthOf(clippingPlaneSlider, "FOV");
     
     /// Effect stuff
     effectSettings = new ofxUICanvas();
+    effectSettings->setDrawBack(false);
     ofAddListener(effectSettings->newGUIEvent, this, &Interface::guiEvent);
     effectSettings->setWidth(300);
     
@@ -153,7 +150,6 @@ void Interface::setup() {
     
     effectScaleSlider = new ofxUISlider_<float>("Scale", 0, 20, &effectScale, 280, 18);
     effectSettings->addWidgetDown(effectScaleSlider);
-    
     
     effectRotXSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotation.x, "rot x");
     effectRotYSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotation.y, "rot y");
@@ -212,7 +208,7 @@ void Interface::setup() {
     
     
     
-    selectScene(project->previewScene->name);
+    selectScene(project->previewScene);
     
 }
 
@@ -246,30 +242,30 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
     if(e.getCanvasParent() == textureSelect) {
         
         string name = ofSplitString(e.getName(), "_")[0];
-        int _id = ofToInt(ofSplitString(e.getName(), "_")[1]);
-        
+        string type = ofSplitString(e.getName(), "_")[1];
+        int _id = ofToInt(ofSplitString(e.getName(), "_")[2]);
         
         if(name == "primary") {
             if(e.getToggle()->getValue()) {
-                selectedScene->landscapeTexture = Asset("texture",  _id);
+                selectedScene->landscapeTexture = Asset(type,  _id);
             } else {
                 selectedScene->landscapeTexture = Asset();
             }
         }else if(name == "secondary") {
             if(e.getToggle()->getValue()) {
-                selectedScene->secondaryTexture = Asset("texture",  _id);
+                selectedScene->secondaryTexture = Asset(type,  _id);
             } else {
                 selectedScene->secondaryTexture = Asset();
             }
         } else if(name == "effect") {
             if(e.getToggle()->getValue()) {
-                selectedScene->effectTexture = Asset("texture",  _id);
+                selectedScene->effectTexture = Asset(type,  _id);
             } else {
                 selectedScene->effectTexture = Asset();
             }
         }else if(name == "sky") {
             if(e.getToggle()->getValue()) {
-                selectedScene->skyTexture = Asset("texture",  _id);
+                selectedScene->skyTexture = Asset(type,  _id);
             } else {
                 selectedScene->skyTexture = Asset();
             }
@@ -281,18 +277,14 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
     
     if(e.getCanvasParent() == sceneSelect)
     {
-        ofxUILabelButton * pressedLabel = (ofxUILabelButton *) e.widget;
         
-        vector<ofxUILabelButton *>::iterator it  = sceneTabs.begin();
-        vector<ofxUILabelButton *>::iterator eit = sceneTabs.end();
         
-        for(; it != eit; ++it) {
-            ofxUILabelButton *w = (*it);
-            w->setValue(false);
+        for(int i=0; i<sceneTabs.size(); i++) {
+            if(e.widget == sceneTabs[i]) {
+                selectScene(project->scenes[i]);
+            }
         }
         
-        pressedLabel->setValue(true);
-        selectScene(pressedLabel->getName());
     }
     
     if(e.getCanvasParent() == projectTopMenu)
@@ -301,17 +293,23 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             
             if(newSceneBtn->getValue()) {
                 project->addScene();
+                selectScene(project->scenes.back());
             }
             
         } else if(e.widget == removeSceneBtn) {
-            
             if(removeSceneBtn->getValue()){
-                if(project->scenes.size() > 1){
+                if(project->scenes.size() > 1 && selectedScene != project->activeScene){
                     project->removeScene(selectedScene);
-                    selectScene(project->scenes.front()->name);
+                    selectScene(project->scenes.back());
                 }
             }
-            
+        } else if(e.widget == cloneSceneBtn) {
+            if(cloneSceneBtn->getValue()){
+                {
+                    project->addScene(selectedScene);
+                    selectScene(project->scenes.back());
+                }
+            }
         }
     }
     
@@ -494,9 +492,9 @@ void Interface::layoutUIInWindow(int w, int h) {
     
 }*/
 
-void Interface::selectScene(string _name) {
+void Interface::selectScene(Scene * _scene) {
     
-    selectedScene = project->getScene(_name);
+    selectedScene = _scene;
     if(!selectedScene) return;
     
     project->previewScene = selectedScene;
@@ -526,13 +524,21 @@ void Interface::selectScene(string _name) {
     bAutoEffectRotation = p->bAutoEffectRotation.get();
     effectRotation      = p->effectOrientationRef.get();
     effectRotSpeed      = p->autoEffectRotSpeed.get();
+    
+    for(int i=0; i<sceneTabs.size(); i++) {
+        if(project->scenes[i] == _scene) {
+            sceneTabs[i]->setValue(true);
+        } else {
+            sceneTabs[i]->setValue(false);
+        }
+    }
+    
 }
 
 
 void Interface::resetModelSelector() {
     
     modelSelect->clearWidgets();
-    
     modelSelect->addLabel("Models");
     
     numModels = 0;
@@ -610,12 +616,34 @@ void Interface::resetTextureSelector() {
             
             textureSelect->addWidgetDown(img);
             
-            textureSelect->addWidgetRight(getToggleBtn("primary", i));
-            textureSelect->addWidgetRight(getToggleBtn("secondary", i));
-            textureSelect->addWidgetRight(getToggleBtn("effect", i));
-            textureSelect->addWidgetRight(getToggleBtn("sky", i));
+            textureSelect->addWidgetRight(getToggleBtn("primary_texture", i));
+            textureSelect->addWidgetRight(getToggleBtn("secondary_texture", i));
+            textureSelect->addWidgetRight(getToggleBtn("effect_texture", i));
+            textureSelect->addWidgetRight(getToggleBtn("sky_texture", i));
             
-            ofxUIButton * clearBtn = new ofxUIButton("clear_"+ofToString(i), false, 20, 20);
+            ofxUIButton * clearBtn = new ofxUIButton("clear_texture_"+ofToString(i), false, 20, 20);
+            clearBtn->setLabelVisible(false);
+            
+            textureSelect->addWidgetRight(clearBtn);
+        }
+    }
+    
+    for(int i =0; i < project->syphonTextures.size(); i++) {
+        if(project->syphonTextures[i].armed) {
+            
+            numTextures++;
+            ofxUIImage * img = new ofxUIImage(40, 20, project->syphonTextures[i].getThumb(), "img_syphon_"+ofToString(i));
+            
+            img->setLabelVisible(false);
+            img->setCropImageToFitRect(true);
+            textureSelect->addWidgetDown(img);
+            
+            textureSelect->addWidgetRight(getToggleBtn("primary_syphon", i));
+            textureSelect->addWidgetRight(getToggleBtn("secondary_syphon", i));
+            textureSelect->addWidgetRight(getToggleBtn("effect_syphon", i));
+            textureSelect->addWidgetRight(getToggleBtn("sky_syphon", i));
+            
+            ofxUIButton * clearBtn = new ofxUIButton("clear_syphon_"+ofToString(i), false, 20, 20);
             clearBtn->setLabelVisible(false);
             
             textureSelect->addWidgetRight(clearBtn);
@@ -639,28 +667,29 @@ void Interface::updateTextureSelector() {
             ofxUIToggle * t = (ofxUIToggle *) w;
             
             string _name = ofSplitString(t->getName(), "_")[0];
-            int _id = ofToInt(ofSplitString(t->getName(), "_")[1]);
-            
+            string _type = ofSplitString(t->getName(), "_")[1];
+            int _id = ofToInt(ofSplitString(t->getName(), "_")[2]);
+            //cout<<_type<<" "<<_name<<" "<<_id<<endl;
             if(_name == "primary" ) {
-                if(_id == selectedScene->landscapeTexture.nid){
+                if(_id == selectedScene->landscapeTexture.nid && selectedScene->landscapeTexture.type == _type){
                     t->setValue(true);
                 } else {
                     t->setValue(false);
                 }
             } else if(_name == "secondary" ) {
-                if(_id == selectedScene->secondaryTexture.nid){
+                if(_id == selectedScene->secondaryTexture.nid && selectedScene->secondaryTexture.type == _type){
                     t->setValue(true);
                 } else {
                     t->setValue(false);
                 }
             } else if(_name == "effect" ) {
-                if(_id == selectedScene->effectTexture.nid){
+                if(_id == selectedScene->effectTexture.nid && selectedScene->effectTexture.type == _type){
                     t->setValue(true);
                 } else {
                     t->setValue(false);
                 }
             } else if(_name == "sky" ) {
-                if(_id == selectedScene->skyTexture.nid){
+                if(_id == selectedScene->skyTexture.nid && selectedScene->skyTexture.type == _type){
                     t->setValue(true);
                 } else {
                     t->setValue(false);
@@ -684,9 +713,21 @@ void Interface::update() {
         sceneSelect->clearWidgets();
         
         for(int i=0; i<project->getScenes().size(); i++ ) {
-            addSceneTab(project->getScenes()[i]->name);
+            addSceneTab(project->getScenes()[i]->name, i);
+        }
+
+        
+    }
+    
+    
+    for(int i=0; i<sceneTabs.size(); i++) {
+        if(project->scenes[i] == selectedScene) {
+            sceneTabs[i]->setValue(true);
+        } else {
+            sceneTabs[i]->setValue(false);
         }
     }
+    
     
     if(project->bTextureAssetsChanged) {
         resetTextureSelector();
@@ -700,8 +741,11 @@ void Interface::update() {
     
 }
 
-void Interface::addSceneTab(string _name) {
-    sceneTabs.push_back(new ofxUILabelButton(_name, false));
+void Interface::addSceneTab(string _name, int _index) {
+    ofxUILabelButton * btn = new ofxUILabelButton(_name, false);
+    btn->setID(_index);
+    sceneTabs.push_back(btn);
+    
     sceneSelect->addWidgetRight(sceneTabs.back());
 }
 
@@ -719,6 +763,7 @@ void Interface::exit() {
 void Interface::draw() {
     //textureSelector->draw(0,0);
     //modelSelector->draw(0, textureSelector->getHeight());
+    
 }
 
 void Interface::dragEvent(ofDragInfo dragInfo) {

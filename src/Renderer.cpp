@@ -148,7 +148,6 @@ void Renderer::setModelFromAsset(ModelFader * modelFader, Asset _asset) {
         modelFader->setWait(project->getModelAsset(_asset));
         modelFader->asset = _asset;
     }
-    
 }
 
 void Renderer::update() {
@@ -265,6 +264,10 @@ void Renderer::renderEffectModel(Model * m, float fade) {
 
 
 void Renderer::render() {
+    
+    //if(name == "preview" && ofGetFrameNum() % 4 != 0) return;
+    //if(name == "preview" && ofGetFrameRate() < 26) return;
+    
     if(scene == NULL) return;
     
     ofPushMatrix();

@@ -72,55 +72,57 @@ class SyphonTexture {
 public:
     // get Thumb
     // name - title
-    ofxSyphonClient * client;
+    ofxSyphonClient client;
     
     SyphonTexture() {
+        client.setup();
         thumbFbo.allocate(50, 50);
-        client = NULL;
         armed = false;
     };
     
-    void arm(ofxSyphonClient * _client) {
-        client = _client;
-        //_client->setup();
+    void arm() {
         //fbo.allocate(_client->getWidth(), _client->getHeight());
         armed = true;
         bChanged = true;
+        
+        drawThumb();
     }
     
     void update() {
-        if(bChanged) {
-            getThumb();
+        
+        if(armed) {
+            //if(!client.getTextureRef().isAllocated()) drawThumb();
         }
+        
+        //if(bChanged) {
+            //getThumb();
+        //}
     };
     
     void drawThumb(int _width=50, int _height=50) {
-        if(client && client->isSetup()) {
-            client->draw(0,0,50,50);
-        } else {
-            //ofBackground(255, 0, 0);
-        }
+            //client.draw(0,0,50,50);
+            
+            thumbFbo.begin();
+            if(client.isSetup()) {
+                //todo - this is not working
+                client.draw(0,0, _width, _height);
+                //ofBackground(0, 255, 0);
+            } else {
+                ofBackground(255, 0, 0);
+            }
+            ofSetColor(255,255,255);
+            thumbFbo.end();
+            
+            ofPixels pix;
+            thumbFbo.readToPixels(pix);
+            thumb.setFromPixels(pix);
     }
     
     ofImage * getThumb(int _width=50, int _height=50) {
         
-        if(!bChanged && _width == thumb.getWidth() && _height == thumb.getHeight()) return &thumb;
+        if(/*!bChanged &&*/ _width == thumb.getWidth() && _height == thumb.getHeight()) return &thumb;
         
-        thumbFbo.begin();
-        if(client && client->isSetup() && client->getTextureRef().isAllocated()) {
-            //todo - this is not working
-            //client->draw(0,0);
-            ofBackground(0, 255, 0);
-        } else {
-            ofBackground(255, 0, 0);
-        }
-        ofSetColor(255,255,255);
-        thumbFbo.end();
-        
-        ofPixels pix;
-        thumbFbo.readToPixels(pix);
-        thumb.setFromPixels(pix);
-        // todo: maintain aspect ratio with cropping
+                // todo: maintain aspect ratio with cropping
         thumb.resize(_width, _height);
         bChanged = false;
         
@@ -131,8 +133,6 @@ public:
     //ofFbo fbo;
     
 private:
-    string appName;
-    string serverName;
     ofImage thumb;
     bool bChanged;
     ofFbo thumbFbo;

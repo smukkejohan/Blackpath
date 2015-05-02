@@ -57,9 +57,9 @@ public:
     Renderer * liveRenderer;
     Renderer * previewRenderer;
     
-    ofxSyphonServerDirectory dir;
+    ofxSyphonServerDirectory directory;
     
-    int dirIdx;
+    int dirIdx = 0;
     void serverAnnounced(ofxSyphonServerDirectoryEventArgs &arg);
     void serverUpdated(ofxSyphonServerDirectoryEventArgs &args);
     void serverRetired(ofxSyphonServerDirectoryEventArgs &arg);
@@ -72,5 +72,6 @@ public:
     float _height;
     bool bUpdateOutput;
     
-    
+    //vector<ofxSyphonClient> syphonClients;
+    //int numSyphonClients = 0;
 };

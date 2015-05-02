@@ -56,9 +56,29 @@ struct Asset {
 class Scene {
 public:
     
+    
+    Scene(const Scene &_from) {
+        
+        params = new Parameters();
+        *params = *_from.params;
+        
+        landscapeTexture = _from.landscapeTexture;
+        secondaryTexture = _from.secondaryTexture;
+        effectTexture    = _from.effectTexture;
+        skyTexture       = _from.skyTexture;
+        landscapeModel   = _from.landscapeModel;
+        effectModel      = _from.effectModel;
+
+    };
+    
     Scene() {
         params = new Parameters();
         params->init();
+    };
+    
+    
+    ~Scene() {
+        delete params;
     };
     
     string name;
@@ -68,9 +88,6 @@ public:
     void load(ofxXmlSettings& s) {
         
         name = s.getValue("name", "");
-        // settings.getValue
-        // todo load asssets
-        // todo load parameters
         landscapeTexture = Asset("landscapeTexture", s);
         secondaryTexture = Asset("secondaryTexture", s);
         effectTexture = Asset("effectTexture", s);
@@ -78,15 +95,9 @@ public:
         landscapeModel = Asset("landscapeModel", s);
         effectModel = Asset("effectModel", s);
         
-        //params->allParameters.fromString(s.getValue("parameters",""));
-        
         s.pushTag("parameters");
         for(int i=0; i<params->allParameters.size(); i++ ) {
-            
             params->allParameters[i].fromString(s.getValue(params->allParameters[i].getEscapedName(),""));
-            
-            //cout<<params->allParameters[i].toString()<<endl;
-            
         }
         s.popTag();
         
@@ -106,39 +117,14 @@ public:
         landscapeModel.saveAsset("landscapeModel", s);
         effectModel.saveAsset("effectModel", s);
         
-        // save parameters
-        
-        
-        
-        //
-        
-        
-            s.addTag("parameters");
+        s.addTag("parameters");
         s.pushTag("parameters");
         for(int i=0; i<params->allParameters.size(); i++ ) {
             s.addValue(params->allParameters[i].getEscapedName(),params->allParameters[i].toString());
-            
-            //cout<<params->allParameters[i].toString()<<endl;
-
-            
-            
         }
         s.popTag();
-        
-        
-        //s.addValue("parameters",params->allParameters.toString());
-        
-        //cout<<params->allParameters.toString()<<endl;
-        
-        //params->allParameters.toString()
-        
-        
     }
-    
-    void exit() {
-        delete params;
-    };
-    
+
     Asset landscapeTexture,
           secondaryTexture,
           effectTexture,
@@ -166,8 +152,7 @@ public:
     void save(string filename);
     
     void cloneScene(Scene cloneFromScene);
-    void addScene(string name);
-    void addScene();
+    void addScene(Scene * _scene=NULL, string name="");
     
     void removeScene(Scene * _scene);
     
@@ -178,12 +163,12 @@ public:
             
             SyphonTexture * s = &syphonTextures[_asset.nid];
             
-            if(s->client &&
-               s->client->isSetup() &&
+            if(
                s->armed &&
-               s->client->getTextureRef().isAllocated()) {
+               s->client.getTextureRef().isAllocated()) {
                 
-                return &s->client->getTextureRef();
+                cout<<"return syphon texture reference";
+                return &s->client.getTextureRef();
             }
             
         } else if( _asset.type == "texture" ) {

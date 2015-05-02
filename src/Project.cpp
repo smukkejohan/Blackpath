@@ -11,6 +11,7 @@
 #include "Project.h"
 
 void Project::setup() {
+    
     defaultTexture.allocate(20, 20, OF_IMAGE_COLOR);
     defaultTexture.setColor(ofColor::grey);
     defaultTexture.update();
@@ -19,20 +20,15 @@ void Project::setup() {
 void Project::load(string _filename) {
     projectPath = ofToDataPath(_filename);
     settings.load(projectPath);
-
-    textures.clear();
+    
     textures.resize(MAX_TEXTURES);
-    
-    models.clear();
     models.resize(MAX_MODELS);
-    
-    syphonTextures.clear();
     syphonTextures.resize(MAX_SYPHON_TEXTURES);
+    
     
     outWidth = settings.getValue("outwidth", 1280);
     outHeight = settings.getValue("outheight", 720);
     enablePreview = settings.getValue("enablepreview", true);
-    
     
     int texTags = settings.getNumTags("texture");
     for(int i=0; i<texTags; i++) {
@@ -157,18 +153,23 @@ void Project::save(string _filename) {
     save();
 }
 
-void Project::addScene() {
-    string n = ofToString(scenes.size());
-    addScene(n);
-}
-
 /*void Project::setActiveScene(string _sceneName) {
 }*/
 
-void Project::addScene(string _name) {
-    Scene * scene = new Scene();
-    scene->name = _name;
-    scenes.push_back(scene);
+void Project::addScene(Scene * _scene, string _name) {
+    Scene * newScene;
+    if(!_scene) {
+        newScene = new Scene();
+    } else {
+        newScene = new Scene(*_scene);
+    }
+    
+    if(_name == "") {
+        _name = ofToString(scenes.size());
+    }
+    
+    newScene->name = _name;
+    scenes.push_back(newScene);
 }
 
 void Project::removeScene(Scene * _scene) {

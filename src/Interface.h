@@ -64,10 +64,10 @@ public:
     ofxUIScrollableCanvas * modelSelect;
     
     vector<ofxUILabelButton*> sceneTabs;
-    void addSceneTab(string name);
+    void addSceneTab(string name, int i);
     
     Scene * selectedScene;
-    void selectScene(string name);
+    void selectScene(Scene * _scene);
     
     // internal ui values for binding
     ofVec3f camRotSpeed;
