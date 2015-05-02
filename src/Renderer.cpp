@@ -59,14 +59,14 @@ void Renderer::setOutput() {
     if(name == "live") {
     
 
-    fboSettings.height = 1080/2;
-    fboSettings.width  = 1920/2;
+    fboSettings.height = project->outHeight;
+    fboSettings.width  = project->outWidth;
     fboSettings.numSamples = 8;
     
     } else {
         
-        fboSettings.height = 1080/2;///4;
-        fboSettings.width  = 1920/2;///4; TODO scale values so a lower resolution render will have same composition
+        fboSettings.height = project->outHeight;
+        fboSettings.width  = project->outWidth; ///4; TODO scale values so a lower resolution render will have same composition
         fboSettings.numSamples = 1;
         
         

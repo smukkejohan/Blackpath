@@ -142,7 +142,7 @@ void Interface::setup() {
     effectSettings->addWidgetDown(effectXYPad);
     
     
-    effectDistanceSlider = new ofxUISlider_<float>("posz", 0, 1, &effectPositionZ, 20, 280);
+    effectDistanceSlider = new ofxUISlider_<float>("posz", 0, -1, &effectPositionZ, 20, 280);
     effectDistanceSlider->setLabelVisible(false);
     
     effectSettings->addWidgetRight(effectDistanceSlider);
@@ -352,7 +352,7 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
         Parameters * p = selectedScene->params;
         
         if(e.widget == effectXYPad || e.widget == effectDistanceSlider ) {
-            p->effectOffset.set(ofVec3f(effectPositionXY.y, -effectPositionXY.x, effectPositionZ));
+            p->effectOffset.set(ofVec3f(effectPositionXY.x, effectPositionXY.y, effectPositionZ));
             
         } else if(e.widget == effectScaleSlider) {
             p->effectScale.set(effectScale);
