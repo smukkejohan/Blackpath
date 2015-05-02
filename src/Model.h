@@ -79,31 +79,33 @@ public:
                 
                 ofxAssimpMeshHelper & mesh = modelMeshes[i];
                 
-                ofPushMatrix(); {
-                    ofMultMatrix(mesh.matrix);
-                    
-                    if(mesh.twoSided) {
-                        glEnable(GL_CULL_FACE);
-                    }
-                    else {
-                        glDisable(GL_CULL_FACE);
-                    }
-                    
-                    ofEnableBlendMode(mesh.blendMode);
-                    
-                    switch(renderType){
-                        case OF_MESH_FILL:
-                            mesh.vbo.drawElements(GL_TRIANGLES,mesh.indices.size());
-                            break;
-                        case OF_MESH_WIREFRAME:
-                            mesh.vbo.drawElements(GL_LINES,mesh.indices.size());
-                            break;
-                        case OF_MESH_POINTS:
-                            mesh.vbo.drawElements(GL_POINTS,mesh.indices.size());
-                            break;
-                    }
-                    
-                }ofPopMatrix();
+                if(mesh.mesh) {
+                    ofPushMatrix(); {
+                        ofMultMatrix(mesh.matrix);
+                        
+                        if(mesh.twoSided) {
+                            glEnable(GL_CULL_FACE);
+                        }
+                        else {
+                            glDisable(GL_CULL_FACE);
+                        }
+                        
+                        ofEnableBlendMode(mesh.blendMode);
+                        
+                        switch(renderType){
+                            case OF_MESH_FILL:
+                                mesh.vbo.drawElements(GL_TRIANGLES,mesh.indices.size());
+                                break;
+                            case OF_MESH_WIREFRAME:
+                                mesh.vbo.drawElements(GL_LINES,mesh.indices.size());
+                                break;
+                            case OF_MESH_POINTS:
+                                mesh.vbo.drawElements(GL_POINTS,mesh.indices.size());
+                                break;
+                        }
+                        
+                    }ofPopMatrix();
+                }
                 
             }ofPopMatrix();
         }ofPopStyle();

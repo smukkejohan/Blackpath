@@ -14,10 +14,7 @@ void Renderer::setupFilters() {
     effectOffsetFilter      = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
     camOffsetFilter         = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
     
-    // todo filter FOV
-    
-    // todo filter scale
-    
+    // todo filter scale and FOV
 }
 
 void Renderer::setup() {
@@ -32,7 +29,6 @@ void Renderer::setup() {
     effectModelFader = new ModelFader();
     
     modelOffset = ofVec3f(0,0,0);
-    zTravel = 0;
     
     cam.setupPerspective();
     cam.setVFlip(true);
@@ -63,14 +59,14 @@ void Renderer::setOutput() {
     if(name == "live") {
     
 
-    fboSettings.height = 1080;
-    fboSettings.width  = 1920;
+    fboSettings.height = 1080/2;
+    fboSettings.width  = 1920/2;
     fboSettings.numSamples = 8;
     
     } else {
         
-        fboSettings.height = 1080;///4;
-        fboSettings.width  = 1920;///4; TODO scale values so a lower resolution render will have same composition
+        fboSettings.height = 1080/2;///4;
+        fboSettings.width  = 1920/2;///4; TODO scale values so a lower resolution render will have same composition
         fboSettings.numSamples = 1;
         
         
@@ -136,7 +132,7 @@ void Renderer::setTextureFromAsset(TextureFader * textureFader, Asset _asset) {
         if(textureFader->hasTexture() && textureFader->asset.nid == _asset.nid && textureFader->asset.type == _asset.type) {
             // no change
         } else {
-            cout<<name<<":new texture"<<endl;
+            //cout<<name<<":new texture"<<endl;
             textureFader->setWait(project->getTextureAsset(_asset));
             textureFader->asset = _asset;
         }
@@ -148,7 +144,7 @@ void Renderer::setModelFromAsset(ModelFader * modelFader, Asset _asset) {
     if(modelFader->hasModel() && modelFader->asset.nid == _asset.nid && modelFader->asset.type == _asset.type) {
         
     } else {
-        cout<<name<<": new model"<<endl;
+        //cout<<name<<": new model"<<endl;
         modelFader->setWait(project->getModelAsset(_asset));
         modelFader->asset = _asset;
     }
@@ -170,25 +166,26 @@ void Renderer::update() {
     setModelFromAsset(effectModelFader,  scene->effectModel);
     
     if(params->bAutoCameraRotation.get()) {
-        camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
+        params->camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
     } else {
-        camOrientation = params->camOrientation.get();
+        params->camOrientation = params->camOrientationRef.get()*180;
     }
     
-    cam.setOrientation(camOrientationFilter->updateDegree(camOrientation + params->camOrientation.get()));
+    cam.setOrientation(camOrientationFilter->updateDegree(params->camOrientation.get() + params->camOrientationRef.get()*180));
     
     if(params->bAutoEffectRotation.get()) {
-        effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime());
+        params->effectOrientation.set(params->effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime()));
     } else {
-        effectOrientation = params->effectOrientationRef.get();
+        params->effectOrientation.set(params->effectOrientationRef.get());
     }
     
     cam.setFarClip(params->camFarClip);
-    cam.setFov(params->camFov.get());
+    cam.setFov(params->camFov.get() );
     cam.setNearClip(params->camNearClip);
-    zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
     
-    camOffset = camOffsetFilter->update(camRefPos + params->camOffset.get() + ofVec3f(0,0,zTravel));
+    params->zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
+    
+    camOffset = camOffsetFilter->update(camRefPos + (params->camOffset.get()*fbo.getWidth()) ) + ofVec3f(0,0,params->zTravel);
     
     cam.setPosition(camOffset);
     
@@ -249,7 +246,7 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     
     ofTranslate( -m->getSceneCenter()   );
     
-    ofVec3f filteredRot = effectOrientationFilter->updateDegree((effectOrientation*120) + params->effectOrientationRef.get()*120);
+    ofVec3f filteredRot = effectOrientationFilter->updateDegree((params->effectOrientation.get()*120) + params->effectOrientationRef.get()*120);
     ofRotateX(filteredRot.x);
     ofRotateY(filteredRot.y);
     ofRotateZ(filteredRot.z);
@@ -320,7 +317,7 @@ void Renderer::render() {
                     cam.getOrientationQuat().getRotate(a, x, y, z);
                     ofRotate(a, x, y, z);
                     
-                    effectOffset = effectOffsetFilter->update(params->effectOffset.get());
+                    effectOffset = effectOffsetFilter->update(params->effectOffset.get()*fbo.getWidth());
                     ofTranslate(effectOffset);
                     
                     effectTextureFader->begin(); {

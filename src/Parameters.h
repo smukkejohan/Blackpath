@@ -34,7 +34,7 @@ namespace PARAM { // Parmeter constants / defaults
     static const ofVec3f CAM_MIN_SPEED_AUTO_ORIENTATION = ofVec3f(-1,-1,-1);
     static const ofVec3f CAM_MAX_SPEED_AUTO_ORIENTATION = ofVec3f(1,1,1);
     
-    static const ofVec3f EFFECT_DEFAULT_OFFSET = ofVec3f(0,0,-400);
+    static const ofVec3f EFFECT_DEFAULT_OFFSET = ofVec3f(0,0,-0.15);
     static const ofVec3f EFFECT_MIN_OFFSET = ofVec3f(-5000,-5000,-5000);
     static const ofVec3f EFFECT_MAX_OFFSET = ofVec3f(5000,5000,100);
     
@@ -43,7 +43,6 @@ namespace PARAM { // Parmeter constants / defaults
     // effect auto rotation
     
     // effect orientation
-    
     static const ofVec3f EFFECT_MIN_ORIENTATION = ofVec3f(-120,-120,-120);
     static const ofVec3f EFFECT_MAX_ORIENTATION = ofVec3f(120,120,120);
     
@@ -66,7 +65,7 @@ public:
     // Camera parameters
     ofParameter<float>   camFarClip;
     ofParameter<float>   camNearClip; // maybe a range vec2f
-    ofParameter<ofVec3f> camOrientation;
+    ofParameter<ofVec3f> camOrientationRef;
     ofParameter<ofVec2f> camOffset;
     ofParameter<float>   camSpeed;
     ofParameter<float>   camFov;
@@ -97,5 +96,12 @@ public:
     
     // IDEAS
     // debug gui with ofxGui
+    
+    // active parameters - not in gui
+    // but in params to make sure a scene will look as expected
+    ofParameter<float> zTravel;
+    ofParameter<ofVec3f> effectOrientation;
+    ofParameter<ofVec3f> camOrientation;
+    
     
 };

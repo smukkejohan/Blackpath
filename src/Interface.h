@@ -11,6 +11,7 @@
 #include "ofxUI.h"
 #include "Project.h"
 //#include "ofxMultiSelector.h"
+#include <algorithm>    // std::min
 
 using namespace PARAM;
 
@@ -22,11 +23,6 @@ public:
     // hidden or shown
     // what id it corresponds to
     // update method to set what is selected
-    
-    
-    
-    
-    
     
     
 };
@@ -45,85 +41,110 @@ public:
     void draw();
     void exit();
     
-    ofxUIToggle * getToggleBtn(string _title, int _id) {
-        
-
-        ofxUIToggle * btn = new ofxUIToggle(_title +"_"+ ofToString(_id), false, 20, 20);
-        btn->setLabelVisible(false);
-        
-                //cout<<"adding tex button with id "<< _id<<endl;
-        
-        return btn;
-    }
-    
+    void windowResized(int w, int h);
+    void layoutUIInWindow(int w, int h);
+    void dragEvent(ofDragInfo dragInfo);
     
     // pointers to things we interact with
     Project * project;
     
     void resetTextureSelector();
+    void updateTextureSelector();
+    void resetModelSelector();
+    void updateModelSelector();
     
     void guiEvent(ofxUIEventArgs &e);
     
     ofxUICanvas * projectTopMenu;
     ofxUICanvas * sceneSelect;
     ofxUICanvas * projectSettings;
-    
-    ofxUICanvas * sceneSettings; //todo rename cam settings
+    ofxUICanvas * sceneSettings;
     ofxUICanvas * effectSettings;
-    
-    
-    //ofxUICanvas
-    
-    
     ofxUIScrollableCanvas * textureSelect;
     ofxUIScrollableCanvas * modelSelect;
-    
     
     vector<ofxUILabelButton*> sceneTabs;
     void addSceneTab(string name);
     
     Scene * selectedScene;
-    
     void selectScene(string name);
-    //MultiSelector * textureSelector;
-    //MultiSelector * modelSelector;
     
-    //void thumbEventListener(MultiSelectorEventData& args);
-    
+    // internal ui values for binding
     ofVec3f camRotSpeed;
-    
     ofVec3f camOffset;
+    float   camFov;
+    float   camSpeed;
+    ofVec3f camOrientationXY;
+    float   camOrientationZ;
+    bool    bAutoCamOrientation;
+    ofVec3f effectRotSpeed;
+    bool    bAutoEffectRotation;
+    float   effectScale;
+    ofVec3f effectPositionXY;
+    float   effectPositionZ;
     ofVec3f effectRotation;
     
+    // ui widgets
+    ofxUI2DPad        * camOrientationXYPad;
+    ofxUI2DPad        * effectXYPad;
+    ofxUI2DPad        * camOffsetPad;
+    ofxUISlider       * fovSlider;
+    ofxUISlider       * camSpeedSlider;
+    ofxUIRangeSlider  * clippingPlaneSlider;
+    ofxUISlider       * camOrientationZSlider;
+    ofxUISlider       * effectDistanceSlider;
+    ofxUISlider       * effectScaleSlider;
+    ofxUIButton       * resetOrientationButton;
+    ofxUIToggle       * camAutoOrientationToggle;
+    ofxUIToggle       * effectAutoRotationToggle;
     
-    ofVec3f camOrientationXY;
-    float camOrientationZ;
+    ofxUIRotarySlider * autoCamRotXSlider;
+    ofxUIRotarySlider * autoCamRotYSlider;
+    ofxUIRotarySlider * autoCamRotZSlider;
+
+    ofxUIRotarySlider * effectRotXSlider;
+    ofxUIRotarySlider * effectRotYSlider;
+    ofxUIRotarySlider * effectRotZSlider;
     
-    bool bAutoCameraRotation;
+    ofxUIRotarySlider * autoEffectRotXSlider;
+    ofxUIRotarySlider * autoEffectRotYSlider;
+    ofxUIRotarySlider * autoEffectRotZSlider;
     
-    //ofVec3f effectOrientationXY;
-    //float effectOrientationZ;
+    ofxUILabelButton * newSceneBtn;
+    ofxUILabelButton * removeSceneBtn;
+    ofxUILabelButton * cloneSceneBtn;
+    ofxUILabelButton * saveSceneBtn;
+    ofxUILabelButton * saveProjectBtn;
     
-    ofVec3f autoEffectRotSpeed;
+    // actions
+    ofxUIButton * cueLiveButton;
+    ofxUIToggle * previewToggle;
     
-    bool bAutoEffectRotation;
+    ofxUISlider * blackoutSlider;
+    ofxUISlider * directSyphonSlider;
     
-    float effectScale;
+    //void commonUICanvasSetup();
     
-    ofxUI2DPad * effectXYPad;
-    ofVec3f effectPositionXY;
-    float effectPositionZ;
+    // return toggle button for texture and model selector
+    ofxUIToggle * getToggleBtn(string _title, int _id) {
+        
+        ofxUIToggle * btn = new ofxUIToggle(_title +"_"+ ofToString(_id), false, 20, 20);
+        btn->setLabelVisible(false);
+        
+        return btn;
+    }
     
-    ofxUI2DPad * camXYPad;
+    ofxUILabel * getLabel(string _name) {
+        return new ofxUILabel(_name, OFX_UI_FONT_MEDIUM);
+    };
     
-    ofxUI2DPad * camOffsetPad;
     
-    float camFov;
-    float camSpeed;
-    ofxUISlider * fovSlider;
-    
-    ofxUIRangeSlider * clippingSlider;
-    
+    int numTextures = 0;
+    int numModels = 0;
+    int colWidth;
+    int topMenuHeight;
+    int colHeight;
+    int halfColHeight;
     
     
 };

@@ -91,7 +91,7 @@ public:
     Asset asset;
     
 private:
-    bool bClear;
+    bool bClear = false;
     vector<Model *> models; // current, fadeto, wait
     ofxEasingLinear easinglinear;
     string transitionType = "fade"; //todo: scale, morph

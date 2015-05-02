@@ -33,8 +33,8 @@ struct Asset {
     
     Asset(string _name, ofxXmlSettings& s) {
         s.pushTag(_name);
-        type = s.getValue("type", "");
-        nid = s.getValue("nid", 0);
+        type = s.getValue("type", "none");
+        nid = s.getValue("nid", -1);
         s.popTag();
         //isSet = true;
     };
@@ -58,7 +58,6 @@ public:
     
     Scene() {
         params = new Parameters();
-        
         params->init();
     };
     
@@ -170,6 +169,8 @@ public:
     void addScene(string name);
     void addScene();
     
+    void removeScene(Scene * _scene);
+    
     //todo use ref instead of pointer maybe
     ofTexture * getTextureAsset(Asset _asset) {
         
@@ -255,7 +256,13 @@ public:
     vector<Model>   models;
     vector<SyphonTexture> syphonTextures;
     ofImage defaultTexture;
-
+    
+    bool bTextureAssetsChanged = false;
+    bool bModelAssetsChanged = false;
+    
+    
+    int outWidth, outHeight;
+    bool enablePreview;
     
     
 private:

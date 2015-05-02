@@ -13,6 +13,8 @@ void ofApp::setup(){
     
     glEnable(GL_TEXTURE_2D);
     
+    ofSetFrameRate(30);
+    
     ofShowCursor();
     ofSetLogLevel(OF_LOG_NOTICE);
     
@@ -31,8 +33,8 @@ void ofApp::setup(){
     
     ofSetWindowTitle("Black Path");
     
-    _width  = project->getSettings().getValue("outwidth", 1920);
-    _height = project->getSettings().getValue("outheight", 1080);
+    _width  = project->outWidth;;
+    _height = project->outHeight;
     
     ui->setup();
     
@@ -50,11 +52,13 @@ void ofApp::update(){
     
     ui->update();
     
-    liveRenderer->scene =    project->previewScene; // todo active scene
+    liveRenderer->scene =    project->activeScene; // todo active scene
     previewRenderer->scene = project->previewScene;
     
     liveRenderer->update();
-    previewRenderer->update();
+    if(project->enablePreview) {
+        previewRenderer->update();
+    }
     
     project->update();
     
@@ -72,30 +76,31 @@ void ofApp::draw(){
     
     // todo: if the live is the same as output we should reuse the fbo for preview instead of rendering again
     
-    
     ofFill();
     ofBackground(60, 60, 60);
     ofSetColor(255, 255, 255);
     
     liveRenderer->render();
-    previewRenderer->render();
+    if(project->enablePreview) {
+        previewRenderer->render();
     
+        previewRenderer->fbo.draw(300,100, previewRenderer->fbo.getWidth()/4,   previewRenderer->fbo.getHeight()/4);
+    }
     
-    previewRenderer->fbo.draw(300,100, previewRenderer->fbo.getWidth()/4, previewRenderer->fbo.getHeight()/4);
-   
+    ofSetColor(255,0,0);
+    ofDrawRectangle(290, 110+ previewRenderer->fbo.getHeight()/4, liveRenderer->fbo.getWidth()/4+20, liveRenderer->fbo.getHeight()/4+20);
+    ofSetColor(255, 255, 255);
     liveRenderer->fbo.draw(300,120+ previewRenderer->fbo.getHeight()/4, liveRenderer->fbo.getWidth()/4, liveRenderer->fbo.getHeight()/4);
     
     // TODO: Render output monitors for live and preview
     ofSetColor(255, 255, 255);
     
-    ofDrawBitmapString(previewRenderer->scene->name, 300, 100);
+    ofDrawBitmapString("Preview: " + previewRenderer->scene->name, 300, 100);
     
-    ofDrawBitmapString(liveRenderer->scene->name, 300, 120+previewRenderer->fbo.getHeight()/4);
-    
+    ofDrawBitmapString("Live: " + liveRenderer->scene->name, 300, 120+previewRenderer->fbo.getHeight()/4);
     
     previewRenderer->publishSyphon();
     liveRenderer->publishSyphon();
-
 
     ui->draw();
 }
@@ -132,7 +137,7 @@ void ofApp::mouseReleased(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-    
+    ui->windowResized(w,h);
 }
 
 //--------------------------------------------------------------
@@ -142,33 +147,7 @@ void ofApp::gotMessage(ofMessage msg){
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){
-    
-    // if(dragInfo.position in bounds of window )
-    for(int i=0; i < dragInfo.files.size(); i++) {
-        ofFile file(dragInfo.files[i]);
-        
-        if(file.isDirectory()) {
-            
-            ofLogWarning()<<"Loading of directories not supported. "<<file.getFileName()<<" is a directory. Skipping."<<endl;
-            
-        } else if(file.isFile()) {
-            ofLogNotice()<<"Drag and drop file: "<<file.getFileName()<<endl;
-            
-            if(ofContains(ACCEPTED_IMAGE_EXTENSIONS, ofToLower(file.getExtension()))) {
-                // if coordinates are on texture selector
-                project->textureQueue.push_back(file);
-                // else if coordinates are on skybox selector
-            }
-            
-            // if coordinates are on model selector
-            if(ofContains(ACCEPTED_MODEL_EXTENSIONS, ofToLower(file.getExtension()))) {
-                // if coordinates are on texture selector
-                project->modelQueue.push_back(file);
-                // else if coordinates are on skybox selector
-                // use is hit method on ofxUIButton
-            }
-        }
-    }
+    ui->dragEvent(dragInfo);
 }
 
 void ofApp::exit() {

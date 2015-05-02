@@ -11,17 +11,15 @@
 #include "Project.h"
 
 void Project::setup() {
-    
     defaultTexture.allocate(20, 20, OF_IMAGE_COLOR);
     defaultTexture.setColor(ofColor::grey);
     defaultTexture.update();
 }
 
-
 void Project::load(string _filename) {
     projectPath = ofToDataPath(_filename);
     settings.load(projectPath);
-    
+
     textures.clear();
     textures.resize(MAX_TEXTURES);
     
@@ -30,6 +28,11 @@ void Project::load(string _filename) {
     
     syphonTextures.clear();
     syphonTextures.resize(MAX_SYPHON_TEXTURES);
+    
+    outWidth = settings.getValue("outwidth", 1280);
+    outHeight = settings.getValue("outheight", 720);
+    enablePreview = settings.getValue("enablepreview", true);
+    
     
     int texTags = settings.getNumTags("texture");
     for(int i=0; i<texTags; i++) {
@@ -86,6 +89,7 @@ void Project::update() {
         for(int i=0; i<textures.size(); i++) {
             if(!textures[i].armed) {
                 textures[i].load(file, &threadImgLoader);
+                bTextureAssetsChanged = true;
                 break;
             }
         }
@@ -100,6 +104,7 @@ void Project::update() {
         for(int i=0; i<models.size(); i++) {
             if(!models[i].armed) {
                 models[i].load(file);
+                bModelAssetsChanged = true;
                 break;
             }
         }
@@ -126,6 +131,11 @@ void Project::save() {
         settings.popTag();
     }
 
+    
+    settings.addValue("outwidth", outWidth);
+    settings.addValue("outheight", outHeight);
+    settings.addValue("enablepreview", enablePreview);
+    
     //settings.addValue("outwidth", _width);
     //settings.addValue("outheight", _height);
     
@@ -159,6 +169,16 @@ void Project::addScene(string _name) {
     Scene * scene = new Scene();
     scene->name = _name;
     scenes.push_back(scene);
+}
+
+void Project::removeScene(Scene * _scene) {
+    
+    for(int i=0; i<scenes.size();i++){
+        if(scenes[i] == _scene) {
+            scenes.erase(scenes.begin()+i);
+        }
+    }
+    
 }
 
 Scene * Project::getScene(string _name) {

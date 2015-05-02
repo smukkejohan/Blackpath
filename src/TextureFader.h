@@ -79,8 +79,9 @@ public:
     bool hasTexture() {
         
         for(int i=0; i<3; i++) {
-            if (textures[i] && textures[i]->isAllocated()) return true;
+            if (textures[i]) return true;
         }
+        
         return false;
     };
     
@@ -120,5 +121,5 @@ private:
     ofxEasingLinear easinglinear;
     ofShader shader;
     bool useShader;
-    bool setClear;
+    bool setClear=false;
 };

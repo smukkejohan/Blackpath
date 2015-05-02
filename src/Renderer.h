@@ -61,8 +61,6 @@ public:
     ofCamera skyBoxCam;
     ofxCubeMap cubeMap;
     
-    
-    
     // disable enable
     // low priority for preview - preset
        // lower framerate
@@ -78,10 +76,10 @@ public:
     void renderLandscapeVboMeshes(Model * m, float fade, bool prim);
     void renderEffectModel(Model * model, float fade);
     
-    ofxBiquadFilter3f* camOrientationFilter;
-    ofVec3f camOrientation;
+    ofxBiquadFilter3f*    camOrientationFilter;
+    //ofVec3f               camOrientation;
     ofxBiquadFilter3f*    effectOrientationFilter;
-    ofVec3f               effectOrientation;
+    //ofVec3f               effectOrientation;
     ofxBiquadFilter3f*    effectOffsetFilter;
     ofVec3f               effectOffset;
     ofxBiquadFilter3f*    camOffsetFilter;
@@ -92,10 +90,7 @@ public:
     ofVec3f modelOffset;
     ofVec3f modelEndOffset;
     ofVec3f landScapeRefPos;
-    
     ofVec3f camRefPos;
-    
-    float zTravel; // Move z-travel to scene?
     
     void enable()  { enabled = true;  }
     void disable() { enabled = false; }

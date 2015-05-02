@@ -62,50 +62,52 @@ void Parameters::init() {
     
     // default values, labels and ranges
     allParameters.add(
-            camSpeed.set("Speed", 0, -1, 1));
+            camSpeed.set("speed", 0, -1, 1));
     
     // field of view
     allParameters.add(
-            camFov.set("Fov", 50, CAM_MIN_FOV, CAM_MAX_FOV));
+            camFov.set("fov", 50, CAM_MIN_FOV, CAM_MAX_FOV));
     
     allParameters.add(
-            camFarClip.set("FarClip", 4000.0, CAM_MIN_FAR_CLIP, CAM_MAX_FAR_CLIP));
+            camFarClip.set("far-clip", 30000.0));
     
     allParameters.add(
-            camNearClip.set("NearClip", 8.0, CAM_MIN_NEAR_CLIP, CAM_MAX_NEAR_CLIP));
+            camNearClip.set("near-clip", 8.0));
     
     // camera offset x,y - pan
     allParameters.add(
-            camOffset.set("Offset", ofVec2f(0,-80), CAM_MIN_OFFSET, CAM_MAX_OFFSET));
+            camOffset.set("cam-offset", ofVec2f(0,-0.18)));
     
     // camera orientation
     allParameters.add(
-            camOrientation.set("Orientation-Ref", ofVec3f(0,0,0), CAM_MIN_ORIENTATION, CAM_MAX_ORIENTATION));
+            camOrientation.set("cam-orientation-reference", ofVec3f(0,0,0), CAM_MIN_ORIENTATION, CAM_MAX_ORIENTATION));
     
     // direction and speed of automatic camera rotation
     allParameters.add(
-            bAutoCameraRotation.set("Auto-Camera-Orientation", false));
+            bAutoCameraRotation.set("auto-cam-orientation-enabled", false));
     
     allParameters.add(
-            autoCamSpeed.set("Auto-orientation-speed", ofVec3f(0,0,0), CAM_MIN_SPEED_AUTO_ORIENTATION, CAM_MAX_SPEED_AUTO_ORIENTATION));
+            autoCamSpeed.set("cam-orientation-speed", ofVec3f(0,0,0), CAM_MIN_SPEED_AUTO_ORIENTATION, CAM_MAX_SPEED_AUTO_ORIENTATION));
     
     allParameters.add(
-            effectOffset.set("Offset", EFFECT_DEFAULT_OFFSET, EFFECT_MIN_OFFSET, EFFECT_MAX_OFFSET));
+            effectOffset.set("effect-offset", EFFECT_DEFAULT_OFFSET, EFFECT_MIN_OFFSET, EFFECT_MAX_OFFSET));
     
     allParameters.add(
             effectScale.set("Scale", 1, 0, 1));
     
     allParameters.add(
-            bAutoEffectRotation.set("Auto-rotation", false));
+            bAutoEffectRotation.set("effect-uuto-rotation-enabled", false));
    
     allParameters.add(
-            effectOrientationRef.set("Rotation-ref", ofVec3f(0,0,0), ofVec3f(-120,-120,-120), ofVec3f(120,120,120)));
+            effectOrientationRef.set("effect-rotation-reference", ofVec3f(0,0,0), ofVec3f(-120,-120,-120), ofVec3f(120,120,120)));
     
     allParameters.add(
-            autoEffectRotSpeed.set("Auto-rot-speed", ofVec3f(0,0,0), ofVec3f(-1,-1,-1), ofVec3f(1,1,1)));
+            autoEffectRotSpeed.set("effect-rotation-speed", ofVec3f(0,0,0), ofVec3f(-1,-1,-1), ofVec3f(1,1,1)));
     
+    allParameters.add(zTravel.set("ztravel",0));
     
-    
+    allParameters.add(effectOrientation.set("effect-rotation",ofVec3f(0,0,0)));
+    allParameters.add(camOrientation.set("cam-orientation",ofVec3f(0,0,0)));
     
     //allParamPanel.setup(allParameters);
     
