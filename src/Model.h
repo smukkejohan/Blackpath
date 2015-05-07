@@ -14,20 +14,20 @@ class Model : public ofxAssimpModelLoader {
 public:
     
     Model() {
-        thumbFbo.allocate(50, 50);
+        //thumbFbo.allocate(50, 50);
         thumbCam.setupPerspective();
     }
     
     void update() {
         if(bChanged) {
-            getThumb();
+            //getThumb();
         }
     }
     
     void load(ofFile _file) {
         file = _file;
         loadModel(file.getAbsolutePath());
-        setScaleNormalization(false);
+        setScaleNormalization(false); //todo normalize everything ?
         /*for(int i=0; i < getMeshCount(); i++) {
          vboMeshes.push_back(getMesh(i));
          }*/
@@ -39,7 +39,7 @@ public:
     bool armed = false;
     ofFile file;
     
-    ofImage * getThumb(int _width=50, int _height=50) {
+    /*ofImage * getThumb(int _width=50, int _height=50) {
         if(hasMeshes()) {
             if(!bChanged && thumb.isAllocated() && _width == thumb.getWidth() && _height == thumb.getHeight()) return &thumb;
             
@@ -58,12 +58,11 @@ public:
             ofPixels pix;
             thumbFbo.readToPixels(pix);
             thumb.setFromPixels(pix);
-            // todo: maintain aspect ratio with cropping
             thumb.resize(_width, _height);
             bChanged = false;
         }
         return &thumb;
-    };
+    };*/
     
     void setChanged() {
         bChanged = true;
@@ -79,8 +78,7 @@ public:
                 
                     ofxAssimpMeshHelper * mesh = &modelMeshes[i];
                 
-                    if(mesh) {
-
+                    if(mesh && mesh->indices.size() > 0) {
                 
                     ofPushMatrix(); {
                         ofMultMatrix(mesh->matrix);
@@ -105,16 +103,11 @@ public:
                                 mesh->vbo.drawElements(GL_POINTS,mesh->indices.size());
                                 break;
                         }
-                        
                     }ofPopMatrix();
                 }
-                
             }ofPopMatrix();
         }ofPopStyle();
-        
     }
-    
-    //vector<ofVboMesh> vboMeshes;
     
 private:
     ofFbo thumbFbo;

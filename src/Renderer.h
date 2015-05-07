@@ -42,7 +42,7 @@ public:
         syphonOut.publishTexture(&fbo.getTexture());
     }
     
-    void setOutput();
+    void setOutput(int _width, int _height);
     void setupFilters();
     void update();             
     
@@ -76,14 +76,16 @@ public:
     void renderLandscapeVboMeshes(Model * m, float fade, bool prim);
     void renderEffectModel(Model * model, float fade);
     
-    ofxBiquadFilter3f*    camOrientationFilter;
+    ofxBiquadFilter3f   camOrientationFilter;
     //ofVec3f               camOrientation;
-    ofxBiquadFilter3f*    effectOrientationFilter;
+    ofxBiquadFilter3f    effectOrientationFilter;
     //ofVec3f               effectOrientation;
-    ofxBiquadFilter3f*    effectOffsetFilter;
+    ofxBiquadFilter3f    effectOffsetFilter;
     ofVec3f               effectOffset;
-    ofxBiquadFilter3f*    camOffsetFilter;
+    ofxBiquadFilter3f    camOffsetFilter;
     ofVec3f               camOffset;
+    
+    ofxBiquadFilter1f camFOVFilter;
     
     ofVec3f travelPos;
     ofVec3f basePos;

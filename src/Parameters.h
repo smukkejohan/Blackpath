@@ -12,6 +12,7 @@
 
 namespace PARAM { // Parmeter constants / defaults
     
+    
     static const float CAM_MIN_SPEED = -1;
     static const float CAM_MAX_SPEED = 1;
     
@@ -82,17 +83,18 @@ public:
     ofParameter<ofVec3f> effectOrientationRef;
     ofParameter<ofVec3f> autoEffectRotSpeed;
     
+    ofParameter<ofVec3f> replicate;
+    ofParameter<ofVec3f> replicateSpacing;
+    
     ofParameterGroup allParameters;
     //ofxPanel allParamPanel;
     //Put these in UI its an action
     //ofParameter<bool>    resetAll;
     //ofParameter<bool>    resetEffectRot;
-    //
     
     // these should be project level
     //ofParameter<float>   directSyphon;
     //ofParameter<float>   blackout;
-    
     
     // IDEAS
     // debug gui with ofxGui

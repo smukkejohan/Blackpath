@@ -28,6 +28,72 @@ public:
 };
 
 
+/*class Vec3RotarySlider {
+public:
+    ofxUIRotarySlider * sX;
+    ofxUIRotarySlider * sY;
+    ofxUIRotarySlider * sZ;
+    
+    ofVec3f * value;
+    
+    void setup() {
+    }
+    
+    void addWidgetsDown() {
+        
+    }
+    
+};
+*/
+
+// int slider
+class Vec3Slider {
+public:
+    ofxUISlider_<int> * sX;
+    ofxUISlider_<int> * sY;
+    ofxUISlider_<int> * sZ;
+    
+    ofVec3f val;
+    int x,y,z;
+    ofParameter<ofVec3f> param;
+    string name;
+    int width, height;
+    
+    Vec3Slider() {
+    }
+    
+    void setup(ofParameter<ofVec3f> & _param) {
+        
+        //param = _param;
+        name = _param.getName();
+        width = 280;
+        height = 18;
+        val = _param.getMin();
+        
+        sX = new ofxUISlider_<int>(name + "-x", _param.getMin().x, _param.getMax().x, &x, width, height);
+        
+        sY = new ofxUISlider_<int>(name + "-y", _param.getMin().y, _param.getMax().y, &y, width, height);
+        
+        sZ = new ofxUISlider_<int>(name + "-z", _param.getMin().z, _param.getMax().z, &z, width, height);
+        
+    }
+ 
+    void addWidgetsDown(ofxUICanvas * canvas) {
+        canvas->addWidgetDown(sX);
+        canvas->addWidgetDown(sY);
+        canvas->addWidgetDown(sZ);
+    }
+    
+    void updateParams(ofParameter<ofVec3f> & p, ofxUIWidget * w) {
+        val = ofVec3f(x,y,z);
+        
+        if(w == sX || w == sY || w == sZ) {
+            p.set(val);
+        }
+    }
+};
+
+
 class Interface {
     
 public:
@@ -110,11 +176,22 @@ public:
     ofxUIRotarySlider * autoEffectRotYSlider;
     ofxUIRotarySlider * autoEffectRotZSlider;
     
+    Vec3Slider effectReplicate;
+    Vec3Slider effectSpacing;
+    
     ofxUILabelButton * newSceneBtn;
     ofxUILabelButton * removeSceneBtn;
     ofxUILabelButton * cloneSceneBtn;
     ofxUILabelButton * saveSceneBtn;
     ofxUILabelButton * saveProjectBtn;
+    
+    ofxUITextInput * widthInput;
+    ofxUITextInput * heightInput;
+    ofxUIButton * updateOutputButton;
+    
+    
+    ofxUITextInput * sceneNameInput;
+    ofxUITextInput * projectNameInput;
     
     // actions
     ofxUIButton * cueLiveButton;

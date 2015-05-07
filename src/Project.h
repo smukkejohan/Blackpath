@@ -108,14 +108,13 @@ public:
         
         s.addValue("name", name);
         
-        
         // save active assets
         landscapeTexture.saveAsset("landscapeTexture", s);
         secondaryTexture.saveAsset("secondaryTexture", s);
-        effectTexture.saveAsset("effectTexture", s);
-        skyTexture.saveAsset("skyTexture", s);
-        landscapeModel.saveAsset("landscapeModel", s);
-        effectModel.saveAsset("effectModel", s);
+           effectTexture.saveAsset("effectTexture",    s);
+              skyTexture.saveAsset("skyTexture",       s);
+          landscapeModel.saveAsset("landscapeModel",   s);
+             effectModel.saveAsset("effectModel",      s);
         
         s.addTag("parameters");
         s.pushTag("parameters");
@@ -147,13 +146,14 @@ public:
     };
     
     void setup();
-    void load(string filename);
+    
+    void load(string filename="default.xml");
+
     void save();
-    void save(string filename);
+    void save(string _filename);
     
-    void cloneScene(Scene cloneFromScene);
-    void addScene(Scene * _scene=NULL, string name="");
-    
+    void cloneScene(Scene _cloneFromScene);
+    void addScene(Scene * _scene=NULL, string _name="");
     void removeScene(Scene * _scene);
     
     //todo use ref instead of pointer maybe
@@ -174,8 +174,11 @@ public:
         } else if( _asset.type == "texture" ) {
             
             // todo loop through and match nid instead of depend on location
-            
+            if(textures[_asset.nid].armed) {
                 return &textures[_asset.nid].getTexture();
+            } else {
+                return &defaultTexture.getTexture();
+            }
         } else if(_asset.type == "none") {
             return &defaultTexture.getTexture();
         }
@@ -248,10 +251,11 @@ public:
     
     int outWidth, outHeight;
     bool enablePreview;
+    int updateOutputRes = 0;
     
-    
-private:
     string projectPath;
+
+private:
     ofxXmlSettings settings;
     
 
