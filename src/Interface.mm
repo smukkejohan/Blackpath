@@ -240,7 +240,6 @@ void Interface::setup() {
     heightInput = new ofxUITextInput("Output height", ofToString(project->outHeight), 60);
     heightInput->setOnlyNumericInput(true);
     heightInput->setAutoClear(false);
-    
 
     
     projectSettings->addLabel("Width:");
@@ -264,10 +263,8 @@ void Interface::setup() {
     projectSettings->addWidgetDown(projectNameInput);
     
     
-    
     resetTextureSelector();
     resetModelSelector();
-    
     
     layoutUIInWindow(ofGetWidth(), ofGetHeight());
     
