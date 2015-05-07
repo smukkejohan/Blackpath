@@ -118,7 +118,7 @@ public:
     void updateTextureSelector();
     void resetModelSelector();
     void updateModelSelector();
-    
+    void resetSceneSelector();
     void guiEvent(ofxUIEventArgs &e);
     
     ofxUICanvas * projectTopMenu;

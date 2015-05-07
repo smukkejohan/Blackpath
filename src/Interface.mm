@@ -64,12 +64,12 @@ void Interface::setup() {
     removeSceneBtn = new ofxUILabelButton("-", false);
     newSceneBtn->setName("REMOVE_SCENE");
     cloneSceneBtn = new ofxUILabelButton("C", false);
-    saveSceneBtn = new ofxUILabelButton("S", false);
+    //saveSceneBtn = new ofxUILabelButton("S", false);
     saveProjectBtn = new ofxUILabelButton("SP", false);
     
     projectTopMenu->addWidgetRight(newSceneBtn);
     projectTopMenu->addWidgetRight(cloneSceneBtn);
-    projectTopMenu->addWidgetRight(saveSceneBtn);
+    //projectTopMenu->addWidgetRight(saveSceneBtn);
     projectTopMenu->addWidgetRight(removeSceneBtn);
     projectTopMenu->addWidgetRight(saveProjectBtn);
     
@@ -241,19 +241,32 @@ void Interface::setup() {
     heightInput->setOnlyNumericInput(true);
     heightInput->setAutoClear(false);
     
-    
-    updateOutputButton = new ofxUIButton("Update output", false, 40, 40);
+
     
     projectSettings->addLabel("Width:");
     projectSettings->addWidgetDown(widthInput);
     projectSettings->addLabel("Height:");
     projectSettings->addWidgetDown(heightInput);
-    projectSettings->addWidgetDown(updateOutputButton);
+
+    
+    sceneNameInput = new ofxUITextInput("Scene name", selectedScene->name, 100);
+    sceneNameInput->setAutoClear(false);
+
+    
+    projectNameInput = new ofxUITextInput("Project name", project->projectPath, 600);
+    projectNameInput->setAutoClear(false);
+
+    projectSettings->addLabel("Scene name:");
+    projectSettings->addWidgetDown(sceneNameInput);
+    
+    projectSettings->addLabel("Save Project As (type in full path) enter to save:");
+    //projectNameInput->getRect()->setWidth(200);
+    projectSettings->addWidgetDown(projectNameInput);
+    
+    
     
     resetTextureSelector();
     resetModelSelector();
-    
-    
     
     
     layoutUIInWindow(ofGetWidth(), ofGetHeight());
@@ -402,6 +415,11 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                 //ofSystemSaveDialog(project->projectPath, "save project");
                 project->save();
             }
+        } else if(e.widget == saveSceneBtn) {
+            if(saveSceneBtn->getValue()){
+                //ofSystemSaveDialog(project->projectPath, "save project");
+                //selectedScene->save();
+            }
         }
     }
     
@@ -432,6 +450,25 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
         } else if(e.widget == clippingPlaneSlider) {
             p->camNearClip.set(clippingPlaneSlider->getValueLow());
             p->camFarClip.set(clippingPlaneSlider->getValueHigh());
+        } else if(e.widget == resetOrientationButton) {
+            if(resetOrientationButton->getValue()) {
+                
+                camAutoOrientationToggle->setValue(false);
+                camAutoOrientationToggle->triggerSelf();
+                camOrientationZSlider->setValue(0);
+                camOrientationZSlider->triggerSelf();
+                camOrientationXYPad->setValue(ofVec3f(0,0,0));
+                camOrientationXYPad->triggerSelf();
+                camOffsetPad->setValue(ofVec3f(0,0,0));
+                camOffsetPad->triggerSelf();
+                
+                
+                
+                
+                
+                
+                
+            }
         }
     }
     
@@ -490,6 +527,26 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                 
                 project->outHeight = ofToInt(output);
                 project->updateOutputRes = 2;
+            }
+        } else if(e.widget == projectNameInput) {
+            if(projectNameInput->getInputTriggerType() == OFX_UI_TEXTINPUT_ON_ENTER)
+            {
+                //cout << "ON ENTER: ";
+                string path = projectNameInput->getTextString();
+                //cout << output << endl;
+                //project->projectPath = path;
+                project->save(path);
+            }
+        } else if(e.widget == sceneNameInput) {
+            if(sceneNameInput->getInputTriggerType() == OFX_UI_TEXTINPUT_ON_ENTER)
+            {
+                //cout << "ON ENTER: ";
+                string name = sceneNameInput->getTextString();
+                //cout << output << endl;
+                
+                selectedScene->name = name;
+                resetSceneSelector();
+                
             }
         }
     }
@@ -580,7 +637,7 @@ void Interface::layoutUIInWindow(int w, int h) {
     
     if(modelSelect->getRect()->getHeight() < halfColHeight) modelSelect->setHeight(halfColHeight);
     
-    
+    projectSettings->autoSizeToFitWidgets();
     projectSettings->setPosition(colWidth, 600);
     
     //sceneSettings->setWidth(colWidth);
@@ -634,8 +691,12 @@ void Interface::selectScene(Scene * _scene) {
     effectRotation      = p->effectOrientationRef.get();
     effectRotSpeed      = p->autoEffectRotSpeed.get();
     
-    effectReplicate.val = p->replicate.get();
-    effectSpacing.val = p->replicateSpacing.get();
+    effectReplicate.x = p->replicate.get().x;
+    effectReplicate.y = p->replicate.get().y;
+    effectReplicate.z = p->replicate.get().z;
+    effectSpacing.val.x = p->replicateSpacing.get().x;
+    effectSpacing.val.y = p->replicateSpacing.get().y;
+    effectSpacing.val.z = p->replicateSpacing.get().z;
     
     for(int i=0; i<sceneTabs.size(); i++) {
         if(project->scenes[i] == _scene) {
@@ -813,19 +874,24 @@ void Interface::windowResized(int w, int h) {
     layoutUIInWindow(w, h);
 }
 
+
+void Interface::resetSceneSelector() {
+    sceneTabs.clear();
+    sceneSelect->clearWidgets();
+    
+    for(int i=0; i<project->getScenes().size(); i++ ) {
+        addSceneTab(project->getScenes()[i]->name, i);
+    }
+
+}
+
 void Interface::update() {
     
     // keep interface in sync with project
     // optimally this should potentially support another UI controlling the same project in parrallel
  
     if(project->getScenes().size() != sceneTabs.size()) {
-        sceneTabs.clear();
-        sceneSelect->clearWidgets();
-        
-        for(int i=0; i<project->getScenes().size(); i++ ) {
-            addSceneTab(project->getScenes()[i]->name, i);
-        }
-
+        resetSceneSelector();
         
     }
     
@@ -896,12 +962,21 @@ void Interface::dragEvent(ofDragInfo dragInfo) {
             }
             
             // if coordinates are on model selector
-            if(ofContains(ACCEPTED_MODEL_EXTENSIONS, ofToLower(file.getExtension()))) {
+            else if(ofContains(ACCEPTED_MODEL_EXTENSIONS, ofToLower(file.getExtension()))) {
                 // if coordinates are on texture selector
                 project->modelQueue.push_back(file);
                 // else if coordinates are on skybox selector
                 // use is hit method on ofxUIButton
             }
+            
+            else if(ofToLower(file.getExtension()) == "xml"){
+                
+                project->load(file.getAbsolutePath());
+                
+                projectNameInput->setTextString(project->projectPath);
+                
+                }
+            
         }
     }
 }

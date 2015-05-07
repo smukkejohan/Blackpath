@@ -144,6 +144,8 @@ void Project::save() {
     }
     
     settings.save(projectPath);
+    
+    ofSetWindowTitle("Black Path " + projectPath);
 }
 
 void Project::save(string _filename) {
@@ -177,7 +179,6 @@ void Project::removeScene(Scene * _scene) {
             scenes.erase(scenes.begin()+i);
         }
     }
-    
 }
 
 Scene * Project::getScene(string _name) {
