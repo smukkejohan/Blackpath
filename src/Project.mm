@@ -17,14 +17,17 @@ void Project::setup() {
     defaultTexture.update();
 }
 
+
 void Project::load(string _filename) {
+    
     projectPath = ofToDataPath(_filename);
     settings.load(projectPath);
+    
+    ofSetWindowTitle("Black Path - " + _filename);
     
     textures.resize(MAX_TEXTURES);
     models.resize(MAX_MODELS);
     syphonTextures.resize(MAX_SYPHON_TEXTURES);
-    
     
     outWidth = settings.getValue("outwidth", 1280);
     outHeight = settings.getValue("outheight", 720);
@@ -71,11 +74,13 @@ void Project::load(string _filename) {
     // todo get aciive and preview scene from xml
     activeScene = scenes.front();
     previewScene = scenes.front();
-    //selectedScene = scenes.front();
+
 }
 
 
 void Project::update() {
+    
+    
     // load images in parallel thread one image at a time
     if(textureQueue.size() > 0) {
         
@@ -126,17 +131,10 @@ void Project::save() {
         settings.addValue("path", ofToDataPath(models[i].file.getAbsolutePath()));
         settings.popTag();
     }
-
     
     settings.addValue("outwidth", outWidth);
     settings.addValue("outheight", outHeight);
     settings.addValue("enablepreview", enablePreview);
-    
-    //settings.addValue("outwidth", _width);
-    //settings.addValue("outheight", _height);
-    
-    // todo active preview
-    // todo active output
     
     for(int i=0; i<scenes.size(); i++) {
         settings.addTag("scene");

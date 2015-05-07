@@ -10,17 +10,54 @@
 
 #include <algorithm>    // std::min
 
-#define OFX_UI_LABEL_DRAW_BACK false
-#define OFX_UI_DRAW_PADDING false
-#define OFX_UI_DRAW_PADDING_OUTLINE false
+//#define OFX_UI_LABEL_DRAW_BACK true
+//#define OFX_UI_DRAW_PADDING true
+//#define OFX_UI_DRAW_PADDING_OUTLINE true
+
 
 void Interface::setup() {
+    
+    /*NSWindow * appWindow = (NSWindow *)ofGetCocoaWindow();
+    if(appWindow) {
+     
+        
+        NSMenu* bar = [[NSMenu alloc] init];
+        [NSApp setMainMenu:bar];
+        
+        NSMenuItem* appMenuItem =
+        [bar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
+        
+        NSMenu* appMenu = [[NSMenu alloc] init];
+        [appMenuItem setSubmenu:appMenu];
+        
+        [appMenu addItemWithTitle:[NSString stringWithFormat:@"About Black Path"]
+                           action:@selector(orderFrontStandardAboutPanel:)
+                    keyEquivalent:@""];
+     
+    }*/
+    
+    /*
+    NSOpenPanel *opanel = [NSOpenPanel openPanel];
+    [opanel setAllowsMultipleSelection:NO];
+    int returnCode  = [opanel runModalForDirectory:nil file:nil types:nil];
+    
+    if(returnCode == NSOKButton) {
+        NSArray *filenames = [opanel filenames];
+        NSString *file = [filenames objectAtIndex:0];
+        //[self loadFile:file];
+    }*/
+    
+    
+    
+    Parameters * tplParams = new Parameters();
+    tplParams->init();
     
     selectedScene = project->previewScene;
     
     projectTopMenu = new ofxUICanvas();
     ofAddListener(projectTopMenu->newGUIEvent, this, &Interface::guiEvent);
     projectTopMenu->setDrawBack(false);
+    projectTopMenu->setDrawFill(false);
     
     newSceneBtn = new ofxUILabelButton("+", false);
     newSceneBtn->setName("ADD_SCENE");
@@ -38,6 +75,8 @@ void Interface::setup() {
     
     sceneSelect = new ofxUICanvas();
     sceneSelect->setDrawBack(false);
+    sceneSelect->setDrawFill(false);
+    
     sceneSelect->setName("Scene Select");
     ofAddListener(sceneSelect->newGUIEvent, this, &Interface::guiEvent);
     
@@ -45,20 +84,28 @@ void Interface::setup() {
     
     projectSettings = new ofxUICanvas();
     projectSettings->setDrawBack(false);
+    projectSettings->setDrawFill(false);
+    
     ofAddListener(projectSettings->newGUIEvent, this, &Interface::guiEvent);
     projectSettings->addFPSSlider("FPS");
     //projectSettings
     
     textureSelect = new ofxUIScrollableCanvas();
     textureSelect->setDrawBack(false);
+    textureSelect->setDrawFill(false);
+    
     ofAddListener(textureSelect->newGUIEvent, this, &Interface::guiEvent);
 
     modelSelect = new ofxUIScrollableCanvas();
     modelSelect->setDrawBack(false);
+    modelSelect->setDrawFill(false);
+    
     ofAddListener(modelSelect->newGUIEvent, this, &Interface::guiEvent);
 
     sceneSettings = new ofxUICanvas();
     sceneSettings->setDrawBack(false);
+    sceneSettings->setDrawFill(false);
+    
     ofAddListener(sceneSettings->newGUIEvent, this, &Interface::guiEvent);
     
     sceneSettings->setWidth(300);
@@ -147,7 +194,6 @@ void Interface::setup() {
     effectSettings->addWidgetSouthOf(getLabel("Z"), "posz");
     effectSettings->addWidgetSouthOf(getLabel("Position X,Y,"), "position");
     
-    
     effectScaleSlider = new ofxUISlider_<float>("Scale", 0, 20, &effectScale, 280, 18);
     effectSettings->addWidgetDown(effectScaleSlider);
     
@@ -171,26 +217,11 @@ void Interface::setup() {
     effectSettings->addWidgetRight(autoEffectRotYSlider);
     effectSettings->addWidgetRight(autoEffectRotZSlider);
     
+    effectReplicate.setup(tplParams->replicate);
+    effectReplicate.addWidgetsDown(effectSettings);
     
-    /*ofxUITextInput * widthInput = new ofxUITextInput("Output width", ofToString(_width), 60);
-    widthInput->setOnlyNumericInput(true);
-    widthInput->setAutoClear(false);
-    
-    ofxUITextInput * heightInput = new ofxUITextInput("Output height", ofToString(_height), 60);
-    heightInput->setOnlyNumericInput(true);
-    heightInput->setAutoClear(false);
-    
-    gui->addLabel("Width:");
-    gui->addWidgetDown(widthInput);
-    gui->addLabel("Height:");
-    gui->addWidgetDown(heightInput);*/
-    
-    //gui->addButton("Update output resolution", &bUpdateOutput);
-    
-    /*for(int i=0; i<selectedScene->params->allParameters.size(); i++ ) {
-     cout<<selectedScene->params->allParameters[i].type()<<endl;
-     cout<<selectedScene->params->allParameters[i].getName()<<endl;
-     }*/
+    effectSpacing.setup(tplParams->replicateSpacing);
+    effectSpacing.addWidgetsDown(effectSettings);
     
     
     cueLiveButton = new ofxUIButton("Cue Live", false, 40, 40);
@@ -201,14 +232,44 @@ void Interface::setup() {
     
     projectSettings->addWidgetDown(previewToggle);
     
+    
+    widthInput = new ofxUITextInput("Output width", ofToString(project->outWidth), 60);
+    widthInput->setOnlyNumericInput(true);
+    widthInput->setAutoClear(false);
+    
+    heightInput = new ofxUITextInput("Output height", ofToString(project->outHeight), 60);
+    heightInput->setOnlyNumericInput(true);
+    heightInput->setAutoClear(false);
+    
+    
+    updateOutputButton = new ofxUIButton("Update output", false, 40, 40);
+    
+    projectSettings->addLabel("Width:");
+    projectSettings->addWidgetDown(widthInput);
+    projectSettings->addLabel("Height:");
+    projectSettings->addWidgetDown(heightInput);
+    projectSettings->addWidgetDown(updateOutputButton);
+    
     resetTextureSelector();
     resetModelSelector();
     
+    
+    
+    
     layoutUIInWindow(ofGetWidth(), ofGetHeight());
     
-    
-    
     selectScene(project->previewScene);
+    
+    
+    /*
+    effectSettings->setDrawFill(false);
+    textureSelect->setVisible(false);
+    modelSelect->setVisible(false);
+    sceneSettings->setVisible(false);
+    effectSettings->setVisible(false);
+    */
+    //effectSettings->setVisible(false);
+    
     
 }
 
@@ -232,10 +293,22 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             } else {
                 selectedScene->effectModel = Asset();
             }
+        } else if(name == "clear") {
+            if(e.getToggle()->getValue()) {
+                
+                
+                if(selectedScene->effectModel.nid != _id &&
+                   selectedScene->landscapeModel.nid != _id) {
+                    
+                    project->models[_id].armed = false;
+                    resetModelSelector();
+
+                }
+                
+            }
         }
         
         updateModelSelector();
-        
     }
     
     
@@ -269,7 +342,24 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             } else {
                 selectedScene->skyTexture = Asset();
             }
+        } else if(name == "clear") {
+            if(e.getToggle()->getValue()) {
+                if(type == "texture") {
+                   
+                    
+                    if(selectedScene->skyTexture.nid != _id &&
+                       selectedScene->effectTexture.nid != _id &&
+                       selectedScene->secondaryTexture.nid != _id &&
+                       selectedScene->landscapeTexture.nid != _id) {
+                         project->textures[_id].armed = false;
+                        resetTextureSelector();
+                    }
+                        
+                }
+                
+            }
         }
+        
         
         resetTextureSelector();
     }
@@ -277,14 +367,11 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
     
     if(e.getCanvasParent() == sceneSelect)
     {
-        
-        
         for(int i=0; i<sceneTabs.size(); i++) {
             if(e.widget == sceneTabs[i]) {
                 selectScene(project->scenes[i]);
             }
         }
-        
     }
     
     if(e.getCanvasParent() == projectTopMenu)
@@ -309,6 +396,11 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                     project->addScene(selectedScene);
                     selectScene(project->scenes.back());
                 }
+            }
+        } else if(e.widget == saveProjectBtn) {
+            if(saveProjectBtn->getValue()){
+                //ofSystemSaveDialog(project->projectPath, "save project");
+                project->save();
             }
         }
     }
@@ -341,8 +433,6 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             p->camNearClip.set(clippingPlaneSlider->getValueLow());
             p->camFarClip.set(clippingPlaneSlider->getValueHigh());
         }
-        
-        
     }
     
     if(e.getCanvasParent() == effectSettings && selectedScene != NULL && selectedScene->params != NULL)
@@ -358,7 +448,6 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
         } else if(e.widget == effectAutoRotationToggle) {
             p->bAutoEffectRotation.set(bAutoEffectRotation);
             p->autoEffectRotSpeed.set(effectRotSpeed);
-            
         } else if(e.widget == effectRotXSlider ||
                   e.widget == effectRotYSlider ||
                   e.widget == effectRotZSlider) {
@@ -370,8 +459,9 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             p->autoEffectRotSpeed.set(effectRotSpeed);
         }
         
+        effectReplicate.updateParams(p->replicate, e.widget);
+        effectSpacing.updateParams(p->replicateSpacing, e.widget);
     }
-    
     
     if(e.getCanvasParent() == projectSettings && selectedScene != NULL && selectedScene->params != NULL)
     {
@@ -381,8 +471,27 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             if(e.getButton()->getValue()) {
                 project->activeScene = selectedScene;
             }
+        } else if(e.widget == widthInput) {
+            if(widthInput->getInputTriggerType() == OFX_UI_TEXTINPUT_ON_ENTER)
+            {
+                //cout << "ON ENTER: ";
+                string output = widthInput->getTextString();
+                //cout << output << endl;
+                
+                project->outWidth = ofToInt(output);
+                project->updateOutputRes = 2;
+            }
+        } else if(e.widget == heightInput) {
+            if(heightInput->getInputTriggerType() == OFX_UI_TEXTINPUT_ON_ENTER)
+            {
+                //cout << "ON ENTER: ";
+                string output = heightInput->getTextString();
+                //cout << output << endl;
+                
+                project->outHeight = ofToInt(output);
+                project->updateOutputRes = 2;
+            }
         }
-        
     }
     
     
@@ -472,7 +581,7 @@ void Interface::layoutUIInWindow(int w, int h) {
     if(modelSelect->getRect()->getHeight() < halfColHeight) modelSelect->setHeight(halfColHeight);
     
     
-    projectSettings->setPosition(colWidth, 400);
+    projectSettings->setPosition(colWidth, 600);
     
     //sceneSettings->setWidth(colWidth);
     sceneSettings->autoSizeToFitWidgets();
@@ -525,6 +634,9 @@ void Interface::selectScene(Scene * _scene) {
     effectRotation      = p->effectOrientationRef.get();
     effectRotSpeed      = p->autoEffectRotSpeed.get();
     
+    effectReplicate.val = p->replicate.get();
+    effectSpacing.val = p->replicateSpacing.get();
+    
     for(int i=0; i<sceneTabs.size(); i++) {
         if(project->scenes[i] == _scene) {
             sceneTabs[i]->setValue(true);
@@ -532,7 +644,6 @@ void Interface::selectScene(Scene * _scene) {
             sceneTabs[i]->setValue(false);
         }
     }
-    
 }
 
 
@@ -643,10 +754,9 @@ void Interface::resetTextureSelector() {
             textureSelect->addWidgetRight(getToggleBtn("effect_syphon", i));
             textureSelect->addWidgetRight(getToggleBtn("sky_syphon", i));
             
-            ofxUIButton * clearBtn = new ofxUIButton("clear_syphon_"+ofToString(i), false, 20, 20);
-            clearBtn->setLabelVisible(false);
-            
-            textureSelect->addWidgetRight(clearBtn);
+            /*ofxUIButton * clearBtn = new ofxUIButton("update_syphon_"+ofToString(i), false, 20, 20);
+            clearBtn->setLabelVisible(false);*/
+            //textureSelect->addWidgetRight(clearBtn);
         }
     }
     

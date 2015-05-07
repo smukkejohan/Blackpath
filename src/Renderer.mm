@@ -9,11 +9,13 @@
 #include "Renderer.h"
 
 void Renderer::setupFilters() {
-    camOrientationFilter    = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
-    effectOrientationFilter = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
-    effectOffsetFilter      = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
-    camOffsetFilter         = new ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
+    camOrientationFilter    = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
+    effectOrientationFilter = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
+    effectOffsetFilter      = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
+    camOffsetFilter         = ofxBiquadFilter3f(OFX_BIQUAD_TYPE_LOWPASS, 0.01, 0.7, 0.0);
     
+    camFOVFilter = ofxBiquadFilter1f(OFX_BIQUAD_TYPE_LOWPASS, 0.02, 0.7, 0.0);
+
     // todo filter scale and FOV
 }
 
@@ -35,44 +37,53 @@ void Renderer::setup() {
     
     cubeMap.initEmptyTextures( 512 );
     
-    camRefPos = cam.getPosition();
+    //camRefPos = cam.getPosition();
     landscapeTextureFader->setup();
     effectTextureFader->setup();
     skyTextureFader->setup();
     secondaryTextureFader->setup();
     
     setupFilters();
-    setOutput();
+    setOutput(project->outWidth, project->outHeight);
 }
 
 // todo pass nt width, int height, samples, preview / live mode
-void Renderer::setOutput() {
+void Renderer::setOutput(int _width, int _height) {
     
     // todo make output settings configurable
     
-        ofFbo::Settings fboSettings;
+    ofFbo::Settings fboSettings;
     fboSettings.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
     fboSettings.useDepth = true;
-    fboSettings.internalformat = GL_RGBA;
+    fboSettings.internalformat = GL_RGB;
     
     
     if(name == "live") {
     
-
-    fboSettings.height = project->outHeight;
-    fboSettings.width  = project->outWidth;
-    fboSettings.numSamples = 8;
+        fboSettings.width  = _width;
+        fboSettings.height = _height;
+        fboSettings.numSamples = 8;
     
     } else {
         
-        fboSettings.height = project->outHeight;
-        fboSettings.width  = project->outWidth; ///4; TODO scale values so a lower resolution render will have same composition
+        fboSettings.width  = _width;
+        fboSettings.height = _height; ///4; TODO scale values so a lower resolution render will have same composition
         fboSettings.numSamples = 1;
-        
         
     }
     
     fbo.allocate(fboSettings);
+    //cam.setupPerspective()
+    //cam.setAspectRatio(_width/_height);
+    //cam.setForceAspectRatio(true);
+    
+    //ofViewport(ofRectangle(0,0,_width,_height));
+    
+    cam.setupPerspective(_width, _height);
+    camRefPos = cam.getPosition();
+    //camRefPos = ofVec3f(_width/2, _height/2, )
+    
+
 }
 
 void Renderer::renderSky() {
@@ -81,11 +92,16 @@ void Renderer::renderSky() {
     ofFill();
     ofSetColor(255);
     
+    
+    ofDisableDepthTest();
+    //ofDisableAlphaBlending();
+    
     for( int i = 0; i < 6; i++ )
     {
         cubeMap.beginDrawingInto2D( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i );
         
         ofClear(0,0,0);
+        
         skyTextureFader->draw(cubeMap.getWidth(), cubeMap.getHeight());
         
         cubeMap.endDrawingInto2D();
@@ -99,12 +115,21 @@ void Renderer::renderLandscape() {
     ofFill();
     ofSetColor(255);
     
+    
+    
     ofPushMatrix(); {
+        
+        ofTranslate(fbo.getWidth()/2, fbo.getHeight()/2);
+        
+        //ofDrawRectangle(-fbo.getWidth()/2,-fbo.getHeight()/2,fbo.getWidth(), fbo.getHeight());
+        
+        //ofDrawSphere(-200,-200, -200, 100);
+        //ofDrawGrid();
+        
         ofTranslate(modelOffset);
+        
         ofPushMatrix(); {
             ofPushMatrix(); {
-                
-                ofTranslate(fbo.getWidth()/2,fbo.getHeight()/2);
                 
                 landscapeTextureFader->begin();{
                     renderLandscapeVboMeshes(landscapeFader->getCurrent(), 1-landscapeFader->tween.update(), true);
@@ -148,11 +173,18 @@ void Renderer::setModelFromAsset(ModelFader * modelFader, Asset _asset) {
         modelFader->setWait(project->getModelAsset(_asset));
         modelFader->asset = _asset;
     }
+    
 }
 
 void Renderer::update() {
     
     Parameters * params = scene->params;
+    
+    if(project->updateOutputRes > 0) {
+        setOutput(project->outWidth, project->outHeight);
+        project->updateOutputRes--;
+    }
+        
     
     // update textures
     setTextureFromAsset(secondaryTextureFader,  scene->secondaryTexture);
@@ -167,10 +199,10 @@ void Renderer::update() {
     if(params->bAutoCameraRotation.get()) {
         params->camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
     } else {
-        params->camOrientation = params->camOrientationRef.get()*180;
+        params->camOrientation = params->camOrientationRef.get()*90;
     }
     
-    cam.setOrientation(camOrientationFilter->updateDegree(params->camOrientation.get() + params->camOrientationRef.get()*180));
+    cam.setOrientation(camOrientationFilter.updateDegree(params->camOrientation.get() + params->camOrientationRef.get()*90));
     
     if(params->bAutoEffectRotation.get()) {
         params->effectOrientation.set(params->effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime()));
@@ -179,12 +211,12 @@ void Renderer::update() {
     }
     
     cam.setFarClip(params->camFarClip);
-    cam.setFov(params->camFov.get() );
+    cam.setFov(camFOVFilter.update(params->camFov.get()));
     cam.setNearClip(params->camNearClip);
     
     params->zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
     
-    camOffset = camOffsetFilter->update(camRefPos + (params->camOffset.get()*fbo.getWidth()) ) + ofVec3f(0,0,params->zTravel);
+    camOffset = camOffsetFilter.update(camRefPos + (params->camOffset.get()*fbo.getWidth()) ) + ofVec3f(0,0,params->zTravel);
     
     cam.setPosition(camOffset);
     
@@ -197,7 +229,7 @@ void Renderer::update() {
 }
 
 void Renderer::renderLandscapeVboMeshes(Model * m, float fade, bool prim = true) {
-    if(m == NULL || !m->hasMeshes()) return;
+    if(m == NULL || !m->hasMeshes() || !m->armed) return;
     
     ofPushMatrix();{
         // tile forward and backward to far clip
@@ -243,19 +275,37 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     
     ofPushMatrix();
     
-    ofTranslate( -m->getSceneCenter()   );
+    ofTranslate(-((params->replicateSpacing.get() * params->replicate.get()) / 2));
+    //
     
-    ofVec3f filteredRot = effectOrientationFilter->updateDegree((params->effectOrientation.get()*120) + params->effectOrientationRef.get()*120);
-    ofRotateX(filteredRot.x);
-    ofRotateY(filteredRot.y);
-    ofRotateZ(filteredRot.z);
+
+    ofVec3f filteredRot = effectOrientationFilter.updateDegree((params->effectOrientation.get()*120) + params->effectOrientationRef.get()*120);
     
-    ofScale(params->effectScale.get(), params->effectScale.get(), params->effectScale.get());
-    
-    ofScale(fade,fade,fade);
-    
-    for(int i=0; i <m->getMeshCount(); i++) {
-        m->drawVboMesh(i);
+    if(m->getMeshCount()>0) {
+        for(int i=0; i <m->getMeshCount(); i++) {
+            for(int rx=0; rx<params->replicate.get().x; rx++) {
+                for(int ry=0; ry<params->replicate.get().y; ry++) {
+                    for(int rz=0; rz<params->replicate.get().z; rz++) {
+                        ofPushMatrix();
+                        ofTranslate(params->replicateSpacing.get().x*rx, params->replicateSpacing.get().y*ry, params->replicateSpacing.get().z*rz);
+                        
+                        ofTranslate( -m->getSceneCenter() );
+                        
+                        ofRotateX(filteredRot.x);
+                        ofRotateY(filteredRot.y);
+                        ofRotateZ(filteredRot.z);
+                        
+                        ofScale(params->effectScale.get(), params->effectScale.get(), params->effectScale.get());
+                        
+                        ofScale(fade,fade,fade);
+                        
+                        m->drawVboMesh(i);
+
+                        ofPopMatrix();
+                    }
+                }
+            }
+        }
     }
     
     ofPopMatrix();
@@ -267,10 +317,11 @@ void Renderer::render() {
     
     //if(name == "preview" && ofGetFrameNum() % 4 != 0) return;
     //if(name == "preview" && ofGetFrameRate() < 26) return;
-    
+    //cout<<cam.getPosition()<<endl;
     if(scene == NULL) return;
     
     ofPushMatrix();
+    
     ofPushStyle();
     
     /*if(name == "preview") {
@@ -280,7 +331,6 @@ void Renderer::render() {
     Parameters * params = scene->params;
     
     ofEnableAlphaBlending();
-    //ofDisableArbTex();
     
     renderSky();
     
@@ -309,8 +359,13 @@ void Renderer::render() {
         } skyBoxCam.end();
         
         cam.begin(); {
-            ofDrawSphere(0, 0, 20);
-
+            
+            
+            // todo normalize everything
+            //ofScale(fbo.getWidth(), fbo.getHeight(), fbo.getWidth());
+            
+            //ofDrawSphere(0, 0, 20);
+            
             renderLandscape();
             
             ofPushMatrix(); {
@@ -320,7 +375,7 @@ void Renderer::render() {
                     cam.getOrientationQuat().getRotate(a, x, y, z);
                     ofRotate(a, x, y, z);
                     
-                    effectOffset = effectOffsetFilter->update(params->effectOffset.get()*fbo.getWidth());
+                    effectOffset = effectOffsetFilter.update(params->effectOffset.get()*fbo.getWidth());
                     ofTranslate(effectOffset);
                     
                     effectTextureFader->begin(); {
@@ -334,7 +389,8 @@ void Renderer::render() {
                     
                 } ofPopStyle();
             } ofPopMatrix();
-            
+             
+             
         } cam.end();
         
         ofDisableDepthTest();

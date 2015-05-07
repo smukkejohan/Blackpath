@@ -109,6 +109,11 @@ void Parameters::init() {
     allParameters.add(effectOrientation.set("effect-rotation",ofVec3f(0,0,0)));
     allParameters.add(camOrientation.set("cam-orientation",ofVec3f(0,0,0)));
     
+    allParameters.add(replicate.set("effect-replicate", ofVec3f(1,1,1), ofVec3f(1,1,1), ofVec3f(10,10,10))  );
+    
+    allParameters.add(replicateSpacing.set("effect-replicate-spacing", ofVec3f(1,1,1), ofVec3f(1,1,1), ofVec3f(400,400,400)));
+    
+    
     //allParamPanel.setup(allParameters);
     
     //directSyphon.set("Syphon direct out", 0, 0, 1);
