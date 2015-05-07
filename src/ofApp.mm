@@ -38,6 +38,8 @@ void ofApp::setup(){
     ofAddListener(directory.events.serverUpdated,   this, &ofApp::serverUpdated);
     ofAddListener(directory.events.serverRetired,   this, &ofApp::serverRetired);
     
+    creditInfo.load("credit-info.png");
+    
 }
 
 //--------------------------------------------------------------
@@ -110,8 +112,9 @@ void ofApp::draw(){
     previewRenderer->publishSyphon();
     liveRenderer->publishSyphon();
     
-    
     ui->draw();
+    
+    creditInfo.draw(ofGetWidth()-300, ofGetHeight()-100, 300, 100);
     
 }
 

@@ -314,13 +314,10 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                     resetModelSelector();
 
                 }
-                
             }
         }
-        
         updateModelSelector();
     }
-    
     
     if(e.getCanvasParent() == textureSelect) {
         

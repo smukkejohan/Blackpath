@@ -44,5 +44,7 @@ public:
     void serverRetired(ofxSyphonServerDirectoryEventArgs &arg);
     
     ofxXmlSettings settings;
+    
+    ofImage creditInfo;
 
 };
