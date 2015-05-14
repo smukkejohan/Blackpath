@@ -91,7 +91,7 @@ public:
     void update() {
         
         if(armed) {
-            //if(!client.getTextureRef().isAllocated()) drawThumb();
+            drawThumb();
         }
         
         //if(bChanged) {
