@@ -57,7 +57,6 @@ void Renderer::setOutput(int _width, int _height) {
     fboSettings.useDepth = true;
     fboSettings.internalformat = GL_RGB;
     
-    
     if(name == "live") {
     
         fboSettings.width  = _width;
@@ -77,7 +76,7 @@ void Renderer::setOutput(int _width, int _height) {
     //cam.setAspectRatio(_width/_height);
     //cam.setForceAspectRatio(true);
     
-    //ofViewport(ofRectangle(0,0,_width,_height));
+    ofViewport(ofRectangle(0,0,_width,_height));
     
     cam.setupPerspective(_width, _height);
     camRefPos = cam.getPosition();
@@ -91,7 +90,6 @@ void Renderer::renderSky() {
     ofPushStyle();
     ofFill();
     ofSetColor(255);
-    
     
     ofDisableDepthTest();
     //ofDisableAlphaBlending();
@@ -197,12 +195,12 @@ void Renderer::update() {
     setModelFromAsset(effectModelFader,  scene->effectModel);
     
     if(params->bAutoCameraRotation.get()) {
-        params->camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime() * 100);
+        params->camOrientation += (params->autoCamSpeed.get() * ofGetLastFrameTime());
     } else {
-        params->camOrientation = params->camOrientationRef.get()*90;
+        params->camOrientation = params->camOrientationRef.get();
     }
     
-    cam.setOrientation(camOrientationFilter.updateDegree(params->camOrientation.get() + params->camOrientationRef.get()*90));
+    cam.setOrientation(camOrientationFilter.updateDegree(params->camOrientation.get() + params->camOrientationRef.get()));
     
     if(params->bAutoEffectRotation.get()) {
         params->effectOrientation.set(params->effectOrientation += (params->autoEffectRotSpeed.get() * ofGetLastFrameTime()));
@@ -214,7 +212,7 @@ void Renderer::update() {
     cam.setFov(camFOVFilter.update(params->camFov.get()));
     cam.setNearClip(params->camNearClip);
     
-    params->zTravel -= params->camSpeed * ofGetLastFrameTime() * 1000;
+    params->zTravel -= params->camSpeed * ofGetLastFrameTime() * 10;
     
     camOffset = camOffsetFilter.update(camRefPos + (params->camOffset.get()*fbo.getWidth()) ) + ofVec3f(0,0,params->zTravel);
     
@@ -279,7 +277,7 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     //
     
 
-    ofVec3f filteredRot = effectOrientationFilter.updateDegree((params->effectOrientation.get()*120) + params->effectOrientationRef.get()*120);
+    ofVec3f filteredRot = effectOrientationFilter.updateDegree((params->effectOrientation.get()) + params->effectOrientationRef.get());
     
     if(m->getMeshCount()>0) {
         for(int i=0; i <m->getMeshCount(); i++) {

@@ -114,7 +114,7 @@ void ofApp::draw(){
     
     ui->draw();
     
-    creditInfo.draw(ofGetWidth()-300, ofGetHeight()-100, 300, 100);
+    //creditInfo.draw(ofGetWidth()-300, ofGetHeight()-100, 300, 100);
     
 }
 
@@ -175,7 +175,6 @@ void ofApp::serverAnnounced(ofxSyphonServerDirectoryEventArgs &arg)
         ofLogNotice("ofxSyphonServerDirectory Server Announced")<<" Server Name: "<<dir.serverName <<" | App Name: "<<dir.appName;
         
         if(directory.serverExists(dir.serverName, dir.appName)) {
-            
             for(int i=0; i<project->syphonTextures.size();i++) {
                 if(project->syphonTextures[i].armed == false) {
                    
@@ -196,8 +195,6 @@ void ofApp::serverUpdated(ofxSyphonServerDirectoryEventArgs &arg)
 {
     for( auto& dir : arg.servers ){
         ofLogNotice("ofxSyphonServerDirectory Server Updated")<<" Server Name: "<<dir.serverName <<" | App Name: "<<dir.appName;
-        
-
     }
 }
 

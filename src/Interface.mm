@@ -118,22 +118,24 @@ void Interface::setup() {
     
     sceneSettings->addLabel("Camera");
     
-    resetOrientationButton = new ofxUIButton("Reset", false, 18, 18);
+    resetOrientationButton = new ofxUIButton("Reset orientation", false, 18, 18);
     sceneSettings->addWidgetRight(resetOrientationButton);
     
-    camSpeedSlider = new ofxUISlider_<float>("Speed", -1, 1, &camSpeed, 600-8, 18);
+    resetOffsetButton = new ofxUIButton("Reset offset", false, 18, 18);
+    sceneSettings->addWidgetRight(resetOffsetButton);
+    
+    camSpeedSlider = new ofxUISlider_<float>("Speed", -100, 100, &camSpeed, 600-8, 18);
     sceneSettings->addWidgetDown(camSpeedSlider);
     
     
     camOrientationXYPad = new ofxUI2DPad("orientationxy",
-                        ofVec3f(-1,1,0),ofVec3f(-1,1,0), &camOrientationXY, 280, 280);
-    
+                        ofVec3f(-90,90,0),ofVec3f(-90,90,0), &camOrientationXY, 280, 280);
     camOrientationXYPad->setLabelVisible(false);
     
     ofxUILabel * label = new ofxUILabel("Camera offset", OFX_UI_FONT_MEDIUM);
     //sceneSettings->addWidgetRight(label);
     
-    camOrientationZSlider = new ofxUISlider_<float>("orientationz", -1, 1, &camOrientationZ, 20, 280);
+    camOrientationZSlider = new ofxUISlider_<float>("orientationz", -90, 90, &camOrientationZ, 20, 280);
     camOrientationZSlider->setLabelVisible(false);
     
     sceneSettings->addWidgetDown(camOrientationXYPad);
@@ -145,25 +147,21 @@ void Interface::setup() {
     sceneSettings->addWidgetRight(camOffsetPad);
     
     sceneSettings->addWidgetSouthOf(getLabel("Orientation X,Y,"), "orientationxy");
-
-    resetOrientationButton->setName("reset_cam_orientation");
     sceneSettings->addWidgetSouthOf(getLabel("Z"), "orientationz");
     sceneSettings->addWidgetSouthOf(getLabel("Position"), "offset");
+    
+    
+    sceneSettings->addSlider("orientation-x", -90, 90, &camOrientationXY.x);
+    sceneSettings->addSlider("orientation-y", -90, 90, &camOrientationXY.y);
+    sceneSettings->addSlider("position-x", -1, 1, &camOffset.x);
+    sceneSettings->addSlider("position-y", -1, 1, &camOffset.y);
     
     camAutoOrientationToggle = new ofxUIToggle("Auto camera orientation", &bAutoCamOrientation, 18, 18);
     
     sceneSettings->addWidgetDown(camAutoOrientationToggle);
     
-    autoCamRotXSlider = new ofxUIRotarySlider(86, -1, 1, &camRotSpeed.x, "rot x");
-    //autoCamRotXSlider->setLabelVisible(false);
-    autoCamRotYSlider = new ofxUIRotarySlider(86, -1, 1, &camRotSpeed.y, "rot y");
-    //autoCamRotYSlider->setLabelVisible(false);
-    autoCamRotZSlider = new ofxUIRotarySlider(86, -1, 1, &camRotSpeed.z, "rot z");
-    //autoCamRotZSlider->setLabelVisible(false);
-    
-    sceneSettings->addWidgetDown(autoCamRotXSlider);
-    sceneSettings->addWidgetRight(autoCamRotYSlider);
-    sceneSettings->addWidgetRight(autoCamRotZSlider);
+    autoCamRotSlider.setup(tplParams->autoCamSpeed);
+    autoCamRotSlider.addWidgetsDown(sceneSettings);
 
     fovSlider = new ofxUISlider_<float>("FOV", CAM_MIN_FOV, CAM_MAX_FOV, &camFov, 280, 18);
     sceneSettings->addWidgetSouthOf(fovSlider, "Position");
@@ -179,12 +177,10 @@ void Interface::setup() {
     effectSettings->setWidth(300);
     
     effectSettings->addLabel("Effect");
-    
     effectXYPad = new ofxUI2DPad("position",
                                  ofVec3f(-1, 1, 0),ofVec3f(-1,1, 0), &effectPositionXY, 280, 280);
     effectXYPad->setLabelVisible(false);
     effectSettings->addWidgetDown(effectXYPad);
-    
     
     effectDistanceSlider = new ofxUISlider_<float>("posz", 0, -1, &effectPositionZ, 20, 280);
     effectDistanceSlider->setLabelVisible(false);
@@ -197,32 +193,21 @@ void Interface::setup() {
     effectScaleSlider = new ofxUISlider_<float>("Scale", 0, 20, &effectScale, 280, 18);
     effectSettings->addWidgetDown(effectScaleSlider);
     
-    effectRotXSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotation.x, "rot x");
-    effectRotYSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotation.y, "rot y");
-    effectRotZSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotation.z, "rot z");
-    
-    effectSettings->addWidgetDown(effectRotXSlider);
-    effectSettings->addWidgetRight(effectRotYSlider);
-    effectSettings->addWidgetRight(effectRotZSlider);
-    
+    effectRotSlider.setup(tplParams->effectOrientationRef);
+    effectRotSlider.addWidgetsDown(effectSettings);
+
     effectAutoRotationToggle = new ofxUIToggle("Auto effect rotation", &bAutoEffectRotation, 18, 18);
     
     effectSettings->addWidgetDown(effectAutoRotationToggle);
     
-    autoEffectRotXSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotSpeed.x, "rot x");
-    autoEffectRotYSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotSpeed.y, "rot y");
-    autoEffectRotZSlider = new ofxUIRotarySlider(86, -1, 1, &effectRotSpeed.z, "rot z");
-    
-    effectSettings->addWidgetDown(autoEffectRotXSlider);
-    effectSettings->addWidgetRight(autoEffectRotYSlider);
-    effectSettings->addWidgetRight(autoEffectRotZSlider);
+    autoEffectRotSlider.setup(tplParams->autoEffectRotSpeed);
+    autoEffectRotSlider.addWidgetsDown(effectSettings);
     
     effectReplicate.setup(tplParams->replicate);
     effectReplicate.addWidgetsDown(effectSettings);
     
     effectSpacing.setup(tplParams->replicateSpacing);
     effectSpacing.addWidgetsDown(effectSettings);
-    
     
     cueLiveButton = new ofxUIButton("Cue Live", false, 40, 40);
     
@@ -431,13 +416,10 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
         } else if(e.widget == camSpeedSlider) {
             p->camSpeed.set(camSpeed);
             
-        } else if(e.widget == camAutoOrientationToggle ||
-                  e.widget == autoCamRotXSlider ||
-                  e.widget == autoCamRotYSlider ||
-                  e.widget == autoCamRotZSlider) {
+        } else if(e.widget == camAutoOrientationToggle) {
             
             p->bAutoCameraRotation.set(bAutoCamOrientation);
-            p->autoCamSpeed.set(camRotSpeed);
+            p->autoCamSpeed.set(autoCamRotSlider.val);
             
         } else if(e.widget == camOffsetPad) {
             p->camOffset.set(ofVec3f(camOffset.x, camOffset.y, 0));
@@ -453,17 +435,33 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
                 camOrientationZSlider->triggerSelf();
                 camOrientationXYPad->setValue(ofVec3f(0,0,0));
                 camOrientationXYPad->triggerSelf();
+
+            }
+        } else if(e.widget == resetOffsetButton) {
+            if(resetOffsetButton->getValue()) {
+                
                 camOffsetPad->setValue(ofVec3f(0,0,0));
                 camOffsetPad->triggerSelf();
                 
-                
-                
-                
-                
-                
-                
             }
         }
+        
+        
+        if(e.widget->getName() == "orientation-x" || e.widget->getName() == "orientation-y") {
+            
+            camOrientationXYPad->triggerSelf();
+            
+        }
+        
+        if(e.widget->getName() == "position-x" || e.widget->getName() == "position-y") {
+            
+            camOffsetPad->triggerSelf();
+            
+        }
+        
+        autoCamRotSlider.updateParams(p->autoCamSpeed, e.widget);
+        
+        
     }
     
     if(e.getCanvasParent() == effectSettings && selectedScene != NULL && selectedScene->params != NULL)
@@ -478,18 +476,10 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
             
         } else if(e.widget == effectAutoRotationToggle) {
             p->bAutoEffectRotation.set(bAutoEffectRotation);
-            p->autoEffectRotSpeed.set(effectRotSpeed);
-        } else if(e.widget == effectRotXSlider ||
-                  e.widget == effectRotYSlider ||
-                  e.widget == effectRotZSlider) {
-            p->effectOrientationRef.set(effectRotation);
-            
-        } else if(e.widget == autoEffectRotXSlider ||
-                  e.widget == autoEffectRotYSlider ||
-                  e.widget == autoEffectRotZSlider) {
-            p->autoEffectRotSpeed.set(effectRotSpeed);
+            p->autoEffectRotSpeed.set(autoEffectRotSlider.val);
         }
-        
+        autoEffectRotSlider.updateParams(p->autoEffectRotSpeed, e.widget);
+        effectRotSlider.updateParams(p->effectOrientationRef, e.widget);
         effectReplicate.updateParams(p->replicate, e.widget);
         effectSpacing.updateParams(p->replicateSpacing, e.widget);
     }
@@ -682,8 +672,9 @@ void Interface::selectScene(Scene * _scene) {
     effectPositionXY    = p->effectOffset.get();
     effectPositionZ     = p->effectOffset.get().z;
     bAutoEffectRotation = p->bAutoEffectRotation.get();
-    effectRotation      = p->effectOrientationRef.get();
-    effectRotSpeed      = p->autoEffectRotSpeed.get();
+    
+    //effectRotation      = p->effectOrientationRef.get();
+    //effectRotSpeed      = p->autoEffectRotSpeed.get();
     
     effectReplicate.x = p->replicate.get().x;
     effectReplicate.y = p->replicate.get().y;
@@ -691,6 +682,10 @@ void Interface::selectScene(Scene * _scene) {
     effectSpacing.val.x = p->replicateSpacing.get().x;
     effectSpacing.val.y = p->replicateSpacing.get().y;
     effectSpacing.val.z = p->replicateSpacing.get().z;
+    
+    autoCamRotSlider.val = p->autoCamSpeed;
+    autoEffectRotSlider.val = p->autoEffectRotSpeed;
+    effectRotSlider.val = p->effectOrientationRef;
     
     for(int i=0; i<sceneTabs.size(); i++) {
         if(project->scenes[i] == _scene) {
@@ -767,7 +762,6 @@ void Interface::updateModelSelector() {
 void Interface::resetTextureSelector() {
 
     textureSelect->clearWidgets();
-    
     textureSelect->addLabel("Textures");
     
     numTextures = 0;
@@ -908,6 +902,9 @@ void Interface::update() {
         resetModelSelector();
         project->bModelAssetsChanged = false;
     }
+    
+    
+    
     
 }
 

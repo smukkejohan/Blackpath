@@ -47,7 +47,7 @@ public:
 */
 
 // int slider
-class Vec3Slider {
+class Vec3IntSlider {
 public:
     ofxUISlider_<int> * sX;
     ofxUISlider_<int> * sY;
@@ -59,7 +59,7 @@ public:
     string name;
     int width, height;
     
-    Vec3Slider() {
+    Vec3IntSlider() {
     }
     
     void setup(ofParameter<ofVec3f> & _param) {
@@ -87,6 +87,49 @@ public:
     void updateParams(ofParameter<ofVec3f> & p, ofxUIWidget * w) {
         val = ofVec3f(x,y,z);
         
+        if(w == sX || w == sY || w == sZ) {
+            p.set(val);
+        }
+    }
+};
+
+class Vec3FloatSlider {
+public:
+    ofxUISlider_<float> * sX;
+    ofxUISlider_<float> * sY;
+    ofxUISlider_<float> * sZ;
+    
+    ofVec3f val;
+    ofParameter<ofVec3f> param;
+    string name;
+    int width, height;
+    
+    Vec3FloatSlider() {
+    }
+    
+    void setup(ofParameter<ofVec3f> & _param) {
+        
+        //param = _param;
+        name = _param.getName();
+        width = 280;
+        height = 18;
+        val = _param.getMin();
+        
+        sX = new ofxUISlider_<float>(name + "-x", _param.getMin().x, _param.getMax().x, &val.x, width, height);
+        
+        sY = new ofxUISlider_<float>(name + "-y", _param.getMin().y, _param.getMax().y, &val.y, width, height);
+        
+        sZ = new ofxUISlider_<float>(name + "-z", _param.getMin().z, _param.getMax().z, &val.z, width, height);
+        
+    }
+    
+    void addWidgetsDown(ofxUICanvas * canvas) {
+        canvas->addWidgetDown(sX);
+        canvas->addWidgetDown(sY);
+        canvas->addWidgetDown(sZ);
+    }
+    
+    void updateParams(ofParameter<ofVec3f> & p, ofxUIWidget * w) {
         if(w == sX || w == sY || w == sZ) {
             p.set(val);
         }
@@ -161,23 +204,29 @@ public:
     ofxUISlider       * effectDistanceSlider;
     ofxUISlider       * effectScaleSlider;
     ofxUIButton       * resetOrientationButton;
+    ofxUIButton       * resetEffectOffsetButton;
+    ofxUIButton       * resetOffsetButton;
     ofxUIToggle       * camAutoOrientationToggle;
     ofxUIToggle       * effectAutoRotationToggle;
     
-    ofxUIRotarySlider * autoCamRotXSlider;
+    
+    Vec3FloatSlider autoCamRotSlider;
+    /*ofxUIRotarySlider * autoCamRotXSlider;
     ofxUIRotarySlider * autoCamRotYSlider;
-    ofxUIRotarySlider * autoCamRotZSlider;
-
-    ofxUIRotarySlider * effectRotXSlider;
+    ofxUIRotarySlider * autoCamRotZSlider;*/
+    
+    Vec3FloatSlider effectRotSlider;
+    /*ofxUIRotarySlider * effectRotXSlider;
     ofxUIRotarySlider * effectRotYSlider;
-    ofxUIRotarySlider * effectRotZSlider;
+    ofxUIRotarySlider * effectRotZSlider;*/
     
-    ofxUIRotarySlider * autoEffectRotXSlider;
+    Vec3FloatSlider autoEffectRotSlider;
+    /*ofxUIRotarySlider * autoEffectRotXSlider;
     ofxUIRotarySlider * autoEffectRotYSlider;
-    ofxUIRotarySlider * autoEffectRotZSlider;
+    ofxUIRotarySlider * autoEffectRotZSlider;*/
     
-    Vec3Slider effectReplicate;
-    Vec3Slider effectSpacing;
+    Vec3IntSlider effectReplicate;
+    Vec3IntSlider effectSpacing;
     
     ofxUILabelButton * newSceneBtn;
     ofxUILabelButton * removeSceneBtn;

@@ -25,15 +25,14 @@ namespace PARAM { // Parmeter constants / defaults
     static const float CAM_MIN_NEAR_CLIP = 0.0;
     static const float CAM_MAX_NEAR_CLIP = 200.0;
     
-    
     static const ofVec2f CAM_MIN_OFFSET = ofVec2f(-500,-500);
     static const ofVec2f CAM_MAX_OFFSET = ofVec2f(500,500);
     
     static const ofVec3f CAM_MIN_ORIENTATION = ofVec3f(-120,-120,-120);
     static const ofVec3f CAM_MAX_ORIENTATION = ofVec3f(120,120,120);
     
-    static const ofVec3f CAM_MIN_SPEED_AUTO_ORIENTATION = ofVec3f(-1,-1,-1);
-    static const ofVec3f CAM_MAX_SPEED_AUTO_ORIENTATION = ofVec3f(1,1,1);
+    static const ofVec3f CAM_MIN_SPEED_AUTO_ORIENTATION = ofVec3f(-180,-180,-180);
+    static const ofVec3f CAM_MAX_SPEED_AUTO_ORIENTATION = ofVec3f(180,180,180);
     
     static const ofVec3f EFFECT_DEFAULT_OFFSET = ofVec3f(0,0,-0.15);
     static const ofVec3f EFFECT_MIN_OFFSET = ofVec3f(-5000,-5000,-5000);
