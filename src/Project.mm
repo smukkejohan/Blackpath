@@ -74,7 +74,6 @@ void Project::load(string _filename) {
     // todo get aciive and preview scene from xml
     activeScene = scenes.front();
     previewScene = scenes.front();
-
 }
 
 

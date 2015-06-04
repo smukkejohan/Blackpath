@@ -37,7 +37,7 @@ void Parameters::init() {
     
     // camera orientation
     allParameters.add(
-            camOrientation.set("cam-orientation-reference", ofVec3f(0,0,0), CAM_MIN_ORIENTATION, CAM_MAX_ORIENTATION));
+            camOrientationRef.set("cam-orientation-reference", ofVec3f(0,0,0), CAM_MIN_ORIENTATION, CAM_MAX_ORIENTATION));
     
     // direction and speed of automatic camera rotation
     allParameters.add(

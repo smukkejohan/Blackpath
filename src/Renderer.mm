@@ -265,7 +265,10 @@ void Renderer::renderLandscapeVboMeshes(Model * m, float fade, bool prim = true)
 
 void Renderer::renderEffectModel(Model * m, float fade) {
     
-    if(m == NULL || !m->hasMeshes()) return;
+    
+    if(m != NULL) { /* why the fuck does theese NULL checks n ot work? ??? */
+    
+    if(!m->armed || m == NULL || !m->hasMeshes()) return;
     Parameters * params = scene->params;
     
     ofPushStyle();
@@ -308,6 +311,7 @@ void Renderer::renderEffectModel(Model * m, float fade) {
     
     ofPopMatrix();
     ofPopStyle();
+    }
 }
 
 
@@ -319,7 +323,6 @@ void Renderer::render() {
     if(scene == NULL) return;
     
     ofPushMatrix();
-    
     ofPushStyle();
     
     /*if(name == "preview") {
@@ -327,9 +330,7 @@ void Renderer::render() {
     }*/
     
     Parameters * params = scene->params;
-    
     ofEnableAlphaBlending();
-    
     renderSky();
     
     ofSetColor(255);
@@ -358,12 +359,10 @@ void Renderer::render() {
         
         cam.begin(); {
             
-            
             // todo normalize everything
             //ofScale(fbo.getWidth(), fbo.getHeight(), fbo.getWidth());
             
             //ofDrawSphere(0, 0, 20);
-            
             renderLandscape();
             
             ofPushMatrix(); {
@@ -379,15 +378,18 @@ void Renderer::render() {
                     effectTextureFader->begin(); {
                         //for(int i=0; i < effectReplicator.get().x; i++) {
                         //    ofTranslate(100, 0);
-                        renderEffectModel(effectModelFader->getCurrent(), 1-effectModelFader->tween.update());
-                        renderEffectModel(effectModelFader->getNext(), effectModelFader->tween.update());
-                        //}
+                        
+                        if(effectModelFader->getCurrent() != NULL) {
+                            renderEffectModel(effectModelFader->getCurrent(), 1-effectModelFader->tween.update());
+                        }
+                        
+                        if(effectModelFader->getNext() != NULL) {
+                            renderEffectModel(effectModelFader->getNext(), effectModelFader->tween.update());
+                        }
                     } effectTextureFader->end();
-                    
                     
                 } ofPopStyle();
             } ofPopMatrix();
-             
              
         } cam.end();
         

@@ -69,6 +69,12 @@ public:
     }
     
     void drawVboMesh(int i, int renderType=OF_MESH_FILL) {
+        if(!this) return;
+        if(!(modelMeshes.size() >= i)) return;
+        
+        ofxAssimpMeshHelper * mesh = &modelMeshes[i];
+        if(!mesh->mesh) return;
+        
         ofPushStyle(); {
             ofFill();
             ofSetColor(255);
@@ -76,9 +82,7 @@ public:
             ofPushMatrix(); {
                 ofMultMatrix(modelMatrix);
                 
-                    ofxAssimpMeshHelper * mesh = &modelMeshes[i];
-                
-                    if(mesh && mesh->indices.size() > 0) {
+                    if(mesh->indices.size() > 0) {
                 
                     ofPushMatrix(); {
                         ofMultMatrix(mesh->matrix);

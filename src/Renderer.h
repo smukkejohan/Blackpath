@@ -106,5 +106,6 @@ public:
     ofxSyphonServer syphonOut;
     
 private:
-    bool enabled;
+    bool enabled = true;
+    
 };

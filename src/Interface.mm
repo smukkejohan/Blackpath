@@ -660,15 +660,17 @@ void Interface::selectScene(Scene * _scene) {
     
     Parameters * p = selectedScene->params;
     
-    camOrientationXY    = p->camOrientationRef.get();
+    camOrientationXY    = ofVec3f(-p->camOrientationRef.get().y, p->camOrientationRef.get().x, 0);
     camOrientationZ     = p->camOrientationRef.get().z;
+    
     camFov              = p->camFov.get();
     camSpeed            = p->camSpeed.get();
     camOffset           = p->camOffset.get();
     effectScale         = p->effectScale.get();
     camRotSpeed         = p->autoCamSpeed.get();
     bAutoCamOrientation = p->bAutoCameraRotation.get();
-    clippingPlaneSlider->setMaxAndMin(p->camFarClip.get(), p->camNearClip.get());
+    clippingPlaneSlider->setValueLow(p->camNearClip.get());
+    clippingPlaneSlider->setValueHigh(p->camFarClip.get());
     effectPositionXY    = p->effectOffset.get();
     effectPositionZ     = p->effectOffset.get().z;
     bAutoEffectRotation = p->bAutoEffectRotation.get();
@@ -679,9 +681,11 @@ void Interface::selectScene(Scene * _scene) {
     effectReplicate.x = p->replicate.get().x;
     effectReplicate.y = p->replicate.get().y;
     effectReplicate.z = p->replicate.get().z;
-    effectSpacing.val.x = p->replicateSpacing.get().x;
-    effectSpacing.val.y = p->replicateSpacing.get().y;
-    effectSpacing.val.z = p->replicateSpacing.get().z;
+    
+    effectSpacing.x = p->replicateSpacing.get().x;
+    effectSpacing.y = p->replicateSpacing.get().y;
+    effectSpacing.z = p->replicateSpacing.get().z;
+    
     
     autoCamRotSlider.val = p->autoCamSpeed;
     autoEffectRotSlider.val = p->autoEffectRotSpeed;

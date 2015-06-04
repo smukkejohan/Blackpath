@@ -9,14 +9,13 @@ void ofApp::setup(){
 #ifdef OF_RELEASE
     ofSetDataPathRoot("../Resources/Data/");
     ofSetWorkingDirectoryToDefault();
-    ofSetLogLevel(OF_LOG_FATAL_ERROR);
+    ofSetLogLevel(OF_LOG_ERROR);
     ofLogToFile("blackpath.log", true);
 #else
 #endif
     
     project = new Project();
     project->setup();
-    
     project->load();
     
     ui = new Interface(project);
@@ -105,7 +104,6 @@ void ofApp::draw(){
     ofSetColor(255, 255, 255);
     
     ofDrawBitmapString("Preview: " + previewRenderer->scene->name, 240, 100);
-    
     ofDrawBitmapString("Live: " + liveRenderer->scene->name, 240, 120+previewRenderer->fbo.getHeight()/4);
     
     //todo syponh enabled setting on renderers, don't publish preview
@@ -155,7 +153,6 @@ void ofApp::windowResized(int w, int h){
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-    
 }
 
 //--------------------------------------------------------------
@@ -164,8 +161,14 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 }
 
 void ofApp::exit() {
-    project->save(); //todo save button not on exit
+    //project->save(); //todo save button not on exit
     //todo are you sure want to quit unsaved project dialog
+    
+    delete liveRenderer;
+    delete previewRenderer;
+    delete project;
+    delete ui;
+    
 }
 
 //these are our directory's callbacks
