@@ -238,7 +238,6 @@ public:
     ofxUITextInput * heightInput;
     ofxUIButton * updateOutputButton;
     
-    
     ofxUITextInput * sceneNameInput;
     ofxUITextInput * projectNameInput;
     

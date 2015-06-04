@@ -291,13 +291,11 @@ void Interface::guiEvent(ofxUIEventArgs &e) {
         } else if(name == "clear") {
             if(e.getToggle()->getValue()) {
                 
-                
                 if(selectedScene->effectModel.nid != _id &&
                    selectedScene->landscapeModel.nid != _id) {
                     
                     project->models[_id].armed = false;
-                    resetModelSelector();
-
+                    
                 }
             }
         }
@@ -732,7 +730,6 @@ void Interface::resetModelSelector() {
     
     updateModelSelector();
     
-    
 }
 
 void Interface::updateModelSelector() {
@@ -887,6 +884,14 @@ void Interface::update() {
         
     }
     
+    int tmpArmedModels = 0;
+    for(int i=0; i< project->models.size();i++) {
+        if(project->models[i].armed) tmpArmedModels++;
+    }
+    
+    if(numModels != tmpArmedModels) {
+        resetModelSelector();
+    }
     
     for(int i=0; i<sceneTabs.size(); i++) {
         if(project->scenes[i] == selectedScene) {
